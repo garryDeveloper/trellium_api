@@ -3,6 +3,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { JwtModule } from '@nestjs/jwt';
 import type { SignOptions } from 'jsonwebtoken';
 import { LoginUseCase } from './application/use-cases/login.use-case';
+import { RegisterUseCase } from './application/use-cases/register.use-case';
 import { PASSWORD_HASHER } from './application/ports/password-hasher.port';
 import { TOKEN_ISSUER } from './application/ports/token-issuer.port';
 import { USER_REPOSITORY } from './domain/ports/user.repository';
@@ -26,6 +27,7 @@ import { AuthController } from './infrastructure/http/controllers/auth.controlle
   controllers: [AuthController],
   providers: [
     LoginUseCase,
+    RegisterUseCase,
     { provide: USER_REPOSITORY, useClass: MikroOrmUserRepository },
     { provide: PASSWORD_HASHER, useClass: Argon2PasswordHasherAdapter },
     { provide: TOKEN_ISSUER, useClass: JwtTokenIssuerAdapter },

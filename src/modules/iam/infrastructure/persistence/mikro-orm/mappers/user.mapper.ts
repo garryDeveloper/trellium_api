@@ -12,4 +12,15 @@ export class UserMapper {
       updatedAt: entity.updatedAt,
     });
   }
+
+  static toPersistence(user: User) {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      passwordHash: user.passwordHash,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+  }
 }

@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { Entity } from '../../../../shared/domain/entity.base';
 
 export interface UserProps {
@@ -12,6 +13,22 @@ export interface UserProps {
 export class User extends Entity<string> {
   private constructor(private readonly props: UserProps) {
     super(props.id);
+  }
+
+  static create(props: {
+    name: string;
+    email: string;
+    passwordHash: string;
+  }): User {
+    const now = new Date();
+    return new User({
+      id: randomUUID(),
+      name: props.name,
+      email: props.email,
+      passwordHash: props.passwordHash,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   static fromPersistence(props: UserProps): User {
