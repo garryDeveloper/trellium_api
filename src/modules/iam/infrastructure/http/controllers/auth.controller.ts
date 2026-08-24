@@ -1,11 +1,24 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import type { FastifyRequest } from 'fastify';
 import { LoginUseCase } from '../../../application/use-cases/login.use-case';
+import { LogoutUseCase } from '../../../application/use-cases/logout.use-case';
 import { RegisterUseCase } from '../../../application/use-cases/register.use-case';
+import { JwtAuthGuard, VerifiedTokenPayload } from '../guards/jwt-auth.guard';
 import { AuthResponseDto } from '../dto/auth.response.dto';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterRequestDto } from '../dto/register.request.dto';
@@ -16,6 +29,7 @@ export class AuthController {
   constructor(
     private readonly loginUseCase: LoginUseCase,
     private readonly registerUseCase: RegisterUseCase,
+    private readonly logoutUseCase: LogoutUseCase,
   ) {}
 
   @Post('login')
@@ -48,5 +62,20 @@ export class AuthController {
       user: { id: user.id, name: user.name, email: user.email },
       token,
     };
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiNoContentResponse({ description: 'Sesión cerrada.' })
+  @ApiUnauthorizedResponse({ description: 'Token inválido o expirado.' })
+  async logout(
+    @Req() req: FastifyRequest & { user: VerifiedTokenPayload },
+  ): Promise<void> {
+    await this.logoutUseCase.execute({
+      jti: req.user.jti,
+      expiresAt: new Date(req.user.exp * 1000),
+    });
   }
 }

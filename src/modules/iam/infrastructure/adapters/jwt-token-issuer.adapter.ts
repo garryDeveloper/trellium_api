@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
@@ -9,7 +10,7 @@ import {
 export class JwtTokenIssuerAdapter implements TokenIssuerPort {
   constructor(private readonly jwtService: JwtService) {}
 
-  issue(payload: TokenPayload): Promise<string> {
-    return this.jwtService.signAsync(payload);
+  issue(payload: Omit<TokenPayload, 'jti'>): Promise<string> {
+    return this.jwtService.signAsync({ ...payload, jti: randomUUID() });
   }
 }
