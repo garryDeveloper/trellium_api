@@ -5,6 +5,8 @@ import type { SignOptions } from 'jsonwebtoken';
 import { LoginUseCase } from './application/use-cases/login.use-case';
 import { LogoutUseCase } from './application/use-cases/logout.use-case';
 import { RegisterUseCase } from './application/use-cases/register.use-case';
+import { GetCurrentUserUseCase } from './application/use-cases/get-current-user.use-case';
+import { UpdateProfileUseCase } from './application/use-cases/update-profile.use-case';
 import { PASSWORD_HASHER } from './application/ports/password-hasher.port';
 import { TOKEN_ISSUER } from './application/ports/token-issuer.port';
 import { USER_REPOSITORY } from './domain/ports/user.repository';
@@ -16,6 +18,7 @@ import { RevokedTokenMikroEntity } from './infrastructure/persistence/mikro-orm/
 import { MikroOrmUserRepository } from './infrastructure/persistence/mikro-orm/repositories/mikro-orm-user.repository';
 import { MikroOrmRevokedTokenRepository } from './infrastructure/persistence/mikro-orm/repositories/mikro-orm-revoked-token.repository';
 import { AuthController } from './infrastructure/http/controllers/auth.controller';
+import { MeController } from './infrastructure/http/controllers/me.controller';
 import { JwtAuthGuard } from './infrastructure/http/guards/jwt-auth.guard';
 import { RevokedTokenCleanupTask } from './infrastructure/tasks/revoked-token-cleanup.task';
 
@@ -30,11 +33,13 @@ import { RevokedTokenCleanupTask } from './infrastructure/tasks/revoked-token-cl
       },
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, MeController],
   providers: [
     LoginUseCase,
     RegisterUseCase,
     LogoutUseCase,
+    GetCurrentUserUseCase,
+    UpdateProfileUseCase,
     JwtAuthGuard,
     RevokedTokenCleanupTask,
     { provide: USER_REPOSITORY, useClass: MikroOrmUserRepository },

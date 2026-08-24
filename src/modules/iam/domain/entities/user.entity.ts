@@ -35,6 +35,10 @@ export class User extends Entity<string> {
     return new User(props);
   }
 
+  rename(name: string): User {
+    return new User({ ...this.props, name, updatedAt: new Date() });
+  }
+
   get name(): string {
     return this.props.name;
   }

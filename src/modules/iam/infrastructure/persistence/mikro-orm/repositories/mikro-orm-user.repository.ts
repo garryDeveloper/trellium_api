@@ -18,4 +18,18 @@ export class MikroOrmUserRepository implements UserRepository {
     const row = await this.em.findOne(UserMikroEntity, { email });
     return row ? UserMapper.toDomain(row) : null;
   }
+
+  async findById(id: string): Promise<User | null> {
+    const row = await this.em.findOne(UserMikroEntity, { id });
+    return row ? UserMapper.toDomain(row) : null;
+  }
+
+  async update(user: User): Promise<User> {
+    const row = await this.em.findOneOrFail(UserMikroEntity, {
+      id: user.id,
+    });
+    this.em.assign(row, UserMapper.toPersistence(user));
+    await this.em.flush();
+    return UserMapper.toDomain(row);
+  }
 }

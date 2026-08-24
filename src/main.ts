@@ -28,6 +28,7 @@ async function bootstrap() {
     .setDescription('API documentation for Trellium')
     .setVersion('1.0')
     .addTag('auth')
+    .addTag('me')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
