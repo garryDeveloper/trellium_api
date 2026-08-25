@@ -3,6 +3,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ScheduleModule } from '@nestjs/schedule';
 import mikroOrmConfig from './shared/infrastructure/persistence/mikro-orm.config';
 import { IamModule } from './modules/iam/iam.module';
+import { HealthController } from './shared/infrastructure/http/controllers/health.controller';
 
 @Module({
   imports: [
@@ -10,7 +11,7 @@ import { IamModule } from './modules/iam/iam.module';
     ScheduleModule.forRoot(),
     IamModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [],
 })
 export class AppModule {}

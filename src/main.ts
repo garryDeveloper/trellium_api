@@ -22,6 +22,10 @@ async function bootstrap() {
 
   app.useGlobalPipes(createValidationPipe());
   app.useGlobalFilters(new DomainExceptionFilter());
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN?.split(',') ?? true,
+    credentials: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Trellium API')
@@ -33,6 +37,6 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 void bootstrap();
