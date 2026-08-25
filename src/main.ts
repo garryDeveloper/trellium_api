@@ -33,6 +33,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .addTag('auth')
     .addTag('me')
+    .addTag('boards')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);

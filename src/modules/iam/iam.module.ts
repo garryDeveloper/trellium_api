@@ -50,6 +50,6 @@ import { RevokedTokenCleanupTask } from './infrastructure/tasks/revoked-token-cl
       useClass: MikroOrmRevokedTokenRepository,
     },
   ],
-  exports: [USER_REPOSITORY, JwtAuthGuard],
+  exports: [USER_REPOSITORY, JwtAuthGuard, JwtModule, REVOKED_TOKEN_REPOSITORY],
 })
 export class IamModule {}
