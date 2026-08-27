@@ -4,6 +4,8 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -27,6 +29,10 @@ import { CreateBoardDto } from '../dto/create-board.dto';
 import { BoardResponseDto } from '../dto/board.response.dto';
 import { ListBoardsQueryDto } from '../dto/list-boards.query.dto';
 import { ListBoardsResponseDto } from '../dto/board-list-item.response.dto';
+import { ChangeStatusUseCase } from 'src/modules/boards/application/use-cases/change-status.use-case';
+import { BoardResponseMapper } from '../mappers/board.response.mapper';
+import { UpdateBoardNameRequestDto } from '../dto/change-name.request.dto';
+import { ChangeNameUseCase } from 'src/modules/boards/application/use-cases/change-name.use-case';
 
 @ApiTags('boards')
 @ApiBearerAuth()
@@ -37,6 +43,8 @@ export class BoardsController {
   constructor(
     private readonly createBoardUseCase: CreateBoardUseCase,
     private readonly listMyBoardsUseCase: ListMyBoardsUseCase,
+    private readonly changeBoardStatusUseCase: ChangeStatusUseCase,
+    private readonly changeBoardNameUseCase: ChangeNameUseCase,
   ) {}
 
   @Get()
@@ -51,15 +59,9 @@ export class BoardsController {
     });
 
     return {
-      boards: boards.map((board) => ({
-        id: board.id,
-        name: board.name,
-        ownerId: board.ownerId,
-        status: board.status,
-        createdAt: board.createdAt.toISOString(),
-        role: board.role,
-        memberCount: board.memberCount,
-      })),
+      boards: boards.map((summary) =>
+        BoardResponseMapper.toListItemDto(summary),
+      ),
     };
   }
 
@@ -75,12 +77,55 @@ export class BoardsController {
       ownerId: req.user.sub,
     });
 
-    return {
-      id: board.id,
-      name: board.name,
-      ownerId: board.ownerId,
-      status: board.status,
-      createdAt: board.createdAt.toISOString(),
-    };
+    return BoardResponseMapper.toResponseDto(board);
+  }
+
+  @Post('/:boardId/archive')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: BoardResponseDto })
+  async archiveBoard(
+    @Param('boardId') boardId: string,
+    @Req() req: FastifyRequest & { user: VerifiedTokenPayload },
+  ): Promise<BoardResponseDto> {
+    const board = await this.changeBoardStatusUseCase.execute({
+      boardId: boardId,
+      status: 'archived',
+      userId: req.user.sub,
+    });
+
+    return BoardResponseMapper.toResponseDto(board);
+  }
+
+  @Post('/:boardId/unarchive')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: BoardResponseDto })
+  async unarchiveBoard(
+    @Param('boardId') boardId: string,
+    @Req() req: FastifyRequest & { user: VerifiedTokenPayload },
+  ): Promise<BoardResponseDto> {
+    const board = await this.changeBoardStatusUseCase.execute({
+      boardId: boardId,
+      status: 'active',
+      userId: req.user.sub,
+    });
+
+    return BoardResponseMapper.toResponseDto(board);
+  }
+
+  @Patch('/:boardId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: BoardResponseDto })
+  async changeBoardName(
+    @Param('boardId') boardId: string,
+    @Body() dto: UpdateBoardNameRequestDto,
+    @Req() req: FastifyRequest & { user: VerifiedTokenPayload },
+  ): Promise<BoardResponseDto> {
+    const board = await this.changeBoardNameUseCase.execute({
+      boardId: boardId,
+      name: dto.name,
+      userId: req.user.sub,
+    });
+
+    return BoardResponseMapper.toResponseDto(board);
   }
 }

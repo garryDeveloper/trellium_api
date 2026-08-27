@@ -22,6 +22,39 @@ interface BoardMembershipRow {
 @Injectable()
 export class MikroOrmBoardRepository implements BoardRepository {
   constructor(private readonly em: EntityManager) {}
+  async changeName(boardId: string, name: string): Promise<Board> {
+    const row = await this.em.findOneOrFail(BoardMikroEntity, {
+      id: boardId,
+    });
+    this.em.assign(row, { name });
+    await this.em.flush();
+    return BoardMapper.toDomain(row);
+  }
+  async findById(boardId: string): Promise<Board | null> {
+    const row = await this.em.findOne(BoardMikroEntity, { id: boardId });
+
+    return row ? BoardMapper.toDomain(row) : null;
+  }
+
+  async isMember(boardId: string, userId: string): Promise<boolean> {
+    const row = await this.em.findOne(BoardMemberMikroEntity, {
+      boardId,
+      userId,
+    });
+
+    return row !== null;
+  }
+  async changeStatus(
+    boardId: string,
+    status: 'active' | 'archived',
+  ): Promise<Board> {
+    const row = await this.em.findOneOrFail(BoardMikroEntity, {
+      id: boardId,
+    });
+    this.em.assign(row, { status });
+    await this.em.flush();
+    return BoardMapper.toDomain(row);
+  }
 
   async create(board: Board): Promise<Board> {
     const row = this.em.create(

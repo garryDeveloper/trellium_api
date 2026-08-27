@@ -8,6 +8,8 @@ import { MikroOrmBoardRepository } from './infrastructure/persistence/mikro-orm/
 import { BoardMikroEntity } from './infrastructure/persistence/mikro-orm/entities/board.mikro-entity';
 import { BoardMemberMikroEntity } from './infrastructure/persistence/mikro-orm/entities/board-member.mikro-entity';
 import { BoardsController } from './infrastructure/http/controllers/boards.controller';
+import { ChangeStatusUseCase } from './application/use-cases/change-status.use-case';
+import { ChangeNameUseCase } from './application/use-cases/change-name.use-case';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { BoardsController } from './infrastructure/http/controllers/boards.contr
   providers: [
     CreateBoardUseCase,
     ListMyBoardsUseCase,
+    ChangeStatusUseCase,
+    ChangeNameUseCase,
     { provide: BOARD_REPOSITORY, useClass: MikroOrmBoardRepository },
   ],
   exports: [BOARD_REPOSITORY],

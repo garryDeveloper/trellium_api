@@ -12,6 +12,10 @@ export interface BoardMembershipSummary {
 }
 
 export interface BoardRepository {
+  findById(boardId: string): Promise<Board | null>;
+  isMember(boardId: string, userId: string): Promise<boolean>;
+  changeName(boardId: string, name: string): Promise<Board>;
+  changeStatus(boardId: string, status: 'active' | 'archived'): Promise<Board>;
   create(board: Board): Promise<Board>;
   addMember(member: BoardMember): Promise<BoardMember>;
   findAllForMember(
