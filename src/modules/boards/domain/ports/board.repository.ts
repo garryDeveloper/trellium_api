@@ -22,6 +22,7 @@ export interface BoardRepository {
     userId: string,
     status: 'active' | 'archived',
   ): Promise<BoardMembershipSummary[]>;
+  deleteBoard(boardId: string): Promise<void>;
 }
 
 export const BOARD_REPOSITORY = Symbol('BOARD_REPOSITORY');

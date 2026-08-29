@@ -10,6 +10,7 @@ import { BoardMemberMikroEntity } from './infrastructure/persistence/mikro-orm/e
 import { BoardsController } from './infrastructure/http/controllers/boards.controller';
 import { ChangeStatusUseCase } from './application/use-cases/change-status.use-case';
 import { ChangeNameUseCase } from './application/use-cases/change-name.use-case';
+import { DeleteBoardUseCase } from './application/use-cases/delete-board.use-case';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ChangeNameUseCase } from './application/use-cases/change-name.use-case'
     ListMyBoardsUseCase,
     ChangeStatusUseCase,
     ChangeNameUseCase,
+    DeleteBoardUseCase,
     { provide: BOARD_REPOSITORY, useClass: MikroOrmBoardRepository },
   ],
   exports: [BOARD_REPOSITORY],

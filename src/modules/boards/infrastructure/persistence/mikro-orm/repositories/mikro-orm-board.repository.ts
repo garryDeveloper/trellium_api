@@ -22,6 +22,9 @@ interface BoardMembershipRow {
 @Injectable()
 export class MikroOrmBoardRepository implements BoardRepository {
   constructor(private readonly em: EntityManager) {}
+  async deleteBoard(boardId: string): Promise<void> {
+    await this.em.nativeDelete(BoardMikroEntity, { id: boardId });
+  }
   async changeName(boardId: string, name: string): Promise<Board> {
     const row = await this.em.findOneOrFail(BoardMikroEntity, {
       id: boardId,
@@ -38,8 +41,8 @@ export class MikroOrmBoardRepository implements BoardRepository {
 
   async isMember(boardId: string, userId: string): Promise<boolean> {
     const row = await this.em.findOne(BoardMemberMikroEntity, {
-      boardId,
-      userId,
+      board: boardId,
+      user: userId,
     });
 
     return row !== null;

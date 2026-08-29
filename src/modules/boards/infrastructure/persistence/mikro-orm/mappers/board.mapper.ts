@@ -28,16 +28,16 @@ export class BoardMapper {
 
   static memberToDomain(entity: BoardMemberMikroEntity): BoardMember {
     return BoardMember.fromPersistence({
-      boardId: entity.boardId,
-      userId: entity.userId,
+      boardId: entity.board.id,
+      userId: entity.user.id,
       joinedAt: entity.joinedAt,
     });
   }
 
   static memberToPersistence(member: BoardMember) {
     return {
-      boardId: member.boardId,
-      userId: member.userId,
+      board: member.boardId,
+      user: member.userId,
       joinedAt: member.joinedAt,
     };
   }

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -14,6 +15,7 @@ import {
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -33,6 +35,7 @@ import { ChangeStatusUseCase } from 'src/modules/boards/application/use-cases/ch
 import { BoardResponseMapper } from '../mappers/board.response.mapper';
 import { UpdateBoardNameRequestDto } from '../dto/change-name.request.dto';
 import { ChangeNameUseCase } from 'src/modules/boards/application/use-cases/change-name.use-case';
+import { DeleteBoardUseCase } from 'src/modules/boards/application/use-cases/delete-board.use-case';
 
 @ApiTags('boards')
 @ApiBearerAuth()
@@ -45,6 +48,7 @@ export class BoardsController {
     private readonly listMyBoardsUseCase: ListMyBoardsUseCase,
     private readonly changeBoardStatusUseCase: ChangeStatusUseCase,
     private readonly changeBoardNameUseCase: ChangeNameUseCase,
+    private readonly deleteBoardUseCase: DeleteBoardUseCase,
   ) {}
 
   @Get()
@@ -127,5 +131,20 @@ export class BoardsController {
     });
 
     return BoardResponseMapper.toResponseDto(board);
+  }
+
+  @Delete('/:boardId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse({
+    description: 'Board deleted successfully',
+  })
+  async deleteBoard(
+    @Param('boardId') boardId: string,
+    @Req() req: FastifyRequest & { user: VerifiedTokenPayload },
+  ): Promise<void> {
+    await this.deleteBoardUseCase.execute({
+      boardId,
+      userId: req.user.sub,
+    });
   }
 }
