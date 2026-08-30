@@ -30,6 +30,9 @@ export class ChangeStatusUseCase implements UseCase<
       throw new NotBoardOwnerError();
     }
 
-    return await this.boards.changeStatus(command.boardId, command.status);
+    const updated =
+      command.status === 'archived' ? board.archive() : board.unarchive();
+
+    return await this.boards.update(updated);
   }
 }

@@ -3,33 +3,34 @@ import { UseCase } from 'src/shared/application/use-case.interface';
 import { BOARD_REPOSITORY } from '../../domain/ports/board.repository';
 import type { BoardRepository } from '../../domain/ports/board.repository';
 import { NotBoardOwnerError } from '../../domain/errors/not-board-owner.error';
-import { NotArchivedBoardError } from '../../domain/errors/not-archived-board.error';
+import { CannotRemoveOwnerError } from '../../domain/errors/cannot-remove-owner.error';
 
-export interface DeleteBoardCommand {
+export interface RemoveMemberCommand {
   boardId: string;
   userId: string;
+  requesterId: string;
 }
 
 @Injectable()
-export class DeleteBoardUseCase implements UseCase<DeleteBoardCommand, void> {
+export class RemoveMemberUseCase implements UseCase<RemoveMemberCommand, void> {
   constructor(
     @Inject(BOARD_REPOSITORY) private readonly boards: BoardRepository,
   ) {}
 
-  async execute(command: DeleteBoardCommand): Promise<void> {
+  async execute(command: RemoveMemberCommand): Promise<void> {
     const board = await this.boards.findById(command.boardId);
     if (!board) {
       throw new Error('Board not found');
     }
 
-    if (board.ownerId !== command.userId) {
+    if (board.ownerId !== command.requesterId) {
       throw new NotBoardOwnerError();
     }
 
-    if (board.status !== 'archived') {
-      throw new NotArchivedBoardError();
+    if (command.userId === board.ownerId) {
+      throw new CannotRemoveOwnerError();
     }
 
-    await this.boards.deleteBoard(command.boardId);
+    await this.boards.removeMember(command.boardId, command.userId);
   }
 }

@@ -3,6 +3,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Board } from '../../../../domain/entities/board.entity';
 import { BoardMember } from '../../../../domain/entities/board-member.entity';
 import {
+  BoardMemberInfo,
   BoardMembershipSummary,
   BoardRepository,
 } from '../../../../domain/ports/board.repository';
@@ -25,14 +26,6 @@ export class MikroOrmBoardRepository implements BoardRepository {
   async deleteBoard(boardId: string): Promise<void> {
     await this.em.nativeDelete(BoardMikroEntity, { id: boardId });
   }
-  async changeName(boardId: string, name: string): Promise<Board> {
-    const row = await this.em.findOneOrFail(BoardMikroEntity, {
-      id: boardId,
-    });
-    this.em.assign(row, { name });
-    await this.em.flush();
-    return BoardMapper.toDomain(row);
-  }
   async findById(boardId: string): Promise<Board | null> {
     const row = await this.em.findOne(BoardMikroEntity, { id: boardId });
 
@@ -47,16 +40,11 @@ export class MikroOrmBoardRepository implements BoardRepository {
 
     return row !== null;
   }
-  async changeStatus(
-    boardId: string,
-    status: 'active' | 'archived',
-  ): Promise<Board> {
-    const row = await this.em.findOneOrFail(BoardMikroEntity, {
-      id: boardId,
-    });
-    this.em.assign(row, { status });
+  async update(board: Board): Promise<Board> {
+    const ref = this.em.getReference(BoardMikroEntity, board.id);
+    this.em.assign(ref, BoardMapper.toPersistence(board));
     await this.em.flush();
-    return BoardMapper.toDomain(row);
+    return board;
   }
 
   async create(board: Board): Promise<Board> {
@@ -75,6 +63,27 @@ export class MikroOrmBoardRepository implements BoardRepository {
     );
     await this.em.persist(row).flush();
     return BoardMapper.memberToDomain(row);
+  }
+
+  async findMembers(boardId: string): Promise<BoardMemberInfo[]> {
+    const rows = await this.em.find(
+      BoardMemberMikroEntity,
+      { board: boardId },
+      { populate: ['user'], orderBy: { joinedAt: 'asc' } },
+    );
+
+    return rows.map((row) => ({
+      userId: row.user.id,
+      name: row.user.name,
+      email: row.user.email,
+    }));
+  }
+
+  async removeMember(boardId: string, userId: string): Promise<void> {
+    await this.em.nativeDelete(BoardMemberMikroEntity, {
+      board: boardId,
+      user: userId,
+    });
   }
 
   async findAllForMember(

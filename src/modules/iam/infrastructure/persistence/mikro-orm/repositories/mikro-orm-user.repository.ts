@@ -25,11 +25,9 @@ export class MikroOrmUserRepository implements UserRepository {
   }
 
   async update(user: User): Promise<User> {
-    const row = await this.em.findOneOrFail(UserMikroEntity, {
-      id: user.id,
-    });
-    this.em.assign(row, UserMapper.toPersistence(user));
+    const ref = this.em.getReference(UserMikroEntity, user.id);
+    this.em.assign(ref, UserMapper.toPersistence(user));
     await this.em.flush();
-    return UserMapper.toDomain(row);
+    return user;
   }
 }

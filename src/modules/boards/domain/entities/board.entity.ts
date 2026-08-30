@@ -35,6 +35,30 @@ export class Board extends Entity<string> {
     return new Board({ ...this.props, name, updatedAt: new Date() });
   }
 
+  archive(): Board {
+    return new Board({
+      ...this.props,
+      status: 'archived',
+      updatedAt: new Date(),
+    });
+  }
+
+  unarchive(): Board {
+    return new Board({
+      ...this.props,
+      status: 'active',
+      updatedAt: new Date(),
+    });
+  }
+
+  transferOwnershipTo(newOwnerId: string): Board {
+    return new Board({
+      ...this.props,
+      ownerId: newOwnerId,
+      updatedAt: new Date(),
+    });
+  }
+
   get name(): string {
     return this.props.name;
   }

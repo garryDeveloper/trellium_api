@@ -36,6 +36,8 @@ import { BoardResponseMapper } from '../mappers/board.response.mapper';
 import { UpdateBoardNameRequestDto } from '../dto/change-name.request.dto';
 import { ChangeNameUseCase } from 'src/modules/boards/application/use-cases/change-name.use-case';
 import { DeleteBoardUseCase } from 'src/modules/boards/application/use-cases/delete-board.use-case';
+import { TransferOwnershipUseCase } from 'src/modules/boards/application/use-cases/transfer-ownership.use-case';
+import { TransferOwnershipRequestDto } from '../dto/transfer-ownership.request.dto';
 
 @ApiTags('boards')
 @ApiBearerAuth()
@@ -49,6 +51,7 @@ export class BoardsController {
     private readonly changeBoardStatusUseCase: ChangeStatusUseCase,
     private readonly changeBoardNameUseCase: ChangeNameUseCase,
     private readonly deleteBoardUseCase: DeleteBoardUseCase,
+    private readonly transferOwnershipUseCase: TransferOwnershipUseCase,
   ) {}
 
   @Get()
@@ -127,6 +130,23 @@ export class BoardsController {
     const board = await this.changeBoardNameUseCase.execute({
       boardId: boardId,
       name: dto.name,
+      userId: req.user.sub,
+    });
+
+    return BoardResponseMapper.toResponseDto(board);
+  }
+
+  @Post('/:boardId/transfer-ownership')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: BoardResponseDto })
+  async transferOwnership(
+    @Param('boardId') boardId: string,
+    @Body() dto: TransferOwnershipRequestDto,
+    @Req() req: FastifyRequest & { user: VerifiedTokenPayload },
+  ): Promise<BoardResponseDto> {
+    const board = await this.transferOwnershipUseCase.execute({
+      boardId,
+      newOwnerId: dto.newOwnerId,
       userId: req.user.sub,
     });
 

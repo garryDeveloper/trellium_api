@@ -1,9 +1,40 @@
 import { Board } from '../../../domain/entities/board.entity';
+import { Invitation } from '../../../domain/entities/invitation.entity';
 import { BoardMembershipSummary } from '../../../domain/ports/board.repository';
+import { InvitationSummary } from '../../../domain/ports/invitation.repository';
+import { BoardMemberSummary } from '../../../application/use-cases/list-board-members.use-case';
 import { BoardResponseDto } from '../dto/board.response.dto';
 import { BoardListItemResponseDto } from '../dto/board-list-item.response.dto';
+import { InvitationResponseDto } from '../dto/invitation.response.dto';
+import { MyInvitationResponseDto } from '../dto/my-invitation.response.dto';
+import { BoardMemberResponseDto } from '../dto/board-member.response.dto';
 
 export class BoardResponseMapper {
+  static toInvitationDto(invitation: Invitation): InvitationResponseDto {
+    return {
+      id: invitation.id,
+      boardId: invitation.boardId,
+      invitedEmail: invitation.invitedEmail,
+      invitedByUserId: invitation.invitedByUserId,
+      status: invitation.status,
+      createdAt: invitation.createdAt.toISOString(),
+    };
+  }
+
+  static toMyInvitationDto(
+    summary: InvitationSummary,
+  ): MyInvitationResponseDto {
+    return {
+      id: summary.invitation.id,
+      boardId: summary.invitation.boardId,
+      boardName: summary.boardName,
+      invitedEmail: summary.invitation.invitedEmail,
+      status: summary.invitation.status,
+      invitedBy: summary.invitedBy,
+      createdAt: summary.invitation.createdAt.toISOString(),
+    };
+  }
+
   static toResponseDto(board: Board): BoardResponseDto {
     return {
       id: board.id,
@@ -25,6 +56,15 @@ export class BoardResponseMapper {
       createdAt: summary.createdAt.toISOString(),
       role: summary.role,
       memberCount: summary.memberCount,
+    };
+  }
+
+  static toMemberDto(member: BoardMemberSummary): BoardMemberResponseDto {
+    return {
+      userId: member.userId,
+      name: member.name,
+      email: member.email,
+      role: member.role,
     };
   }
 }
