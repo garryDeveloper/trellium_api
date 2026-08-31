@@ -5,6 +5,7 @@ import mikroOrmConfig from './shared/infrastructure/persistence/mikro-orm.config
 import { IamModule } from './modules/iam/iam.module';
 import { BoardsModule } from './modules/boards/boards.module';
 import { ListModule } from './modules/lists/list.module';
+import { CardModule } from './modules/cards/card.module';
 import { HealthController } from './shared/infrastructure/http/controllers/health.controller';
 
 @Module({
@@ -14,6 +15,7 @@ import { HealthController } from './shared/infrastructure/http/controllers/healt
     IamModule,
     BoardsModule,
     ListModule,
+    CardModule,
   ],
   controllers: [HealthController],
   providers: [],

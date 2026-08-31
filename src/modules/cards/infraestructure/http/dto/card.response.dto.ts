@@ -1,0 +1,27 @@
+import { ApiProperty } from '@nestjs/swagger';
+
+export class CardResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  title!: string;
+
+  @ApiProperty({ nullable: true, type: String })
+  description!: string | null;
+
+  @ApiProperty()
+  listId!: string;
+
+  @ApiProperty({ enum: ['active', 'archived'] })
+  status!: 'active' | 'archived';
+
+  @ApiProperty()
+  position!: number;
+
+  @ApiProperty({ nullable: true, type: String })
+  dueDate!: string | null;
+
+  @ApiProperty()
+  createdAt!: string;
+}
