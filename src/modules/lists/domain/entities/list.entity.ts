@@ -9,6 +9,7 @@ export interface ListProps {
   position: number;
   createdAt: Date;
   updatedAt: Date;
+  archivedAt: Date | null;
 }
 
 export class List extends Entity<string> {
@@ -26,11 +27,39 @@ export class List extends Entity<string> {
         position: props.position,
         createdAt: now,
         updatedAt: now,
+        archivedAt: null,
       });
     }
 
   static fromPersistence(props: ListProps): List {
     return new List(props);
+  }
+
+  rename(name: string): List {
+    return new List({ ...this.props, name, updatedAt: new Date() });
+  }
+
+  reorder(position: number): List {
+    return new List({ ...this.props, position, updatedAt: new Date() });
+  }
+
+  archive(): List {
+    const now = new Date();
+    return new List({
+      ...this.props,
+      status: 'archived',
+      archivedAt: now,
+      updatedAt: now,
+    });
+  }
+
+  unarchive(): List {
+    return new List({
+      ...this.props,
+      status: 'active',
+      archivedAt: null,
+      updatedAt: new Date(),
+    });
   }
 
   get name(): string {
@@ -55,5 +84,9 @@ export class List extends Entity<string> {
 
   get updatedAt(): Date {
     return this.props.updatedAt;
+  }
+
+  get archivedAt(): Date | null {
+    return this.props.archivedAt;
   }
 }

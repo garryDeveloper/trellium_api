@@ -11,6 +11,7 @@ export class ListMapper {
             position: entity.position,
             createdAt: entity.createdAt,
             updatedAt: entity.updatedAt,
+            archivedAt: entity.archivedAt ?? null,
         });
     }
 
@@ -23,6 +24,7 @@ export class ListMapper {
             position: list.position,
             createdAt: list.createdAt,
             updatedAt: list.updatedAt,
+            archivedAt: list.archivedAt,
         };
     }
 }

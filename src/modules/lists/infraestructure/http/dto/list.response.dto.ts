@@ -19,3 +19,8 @@ export class ListResponseDto {
   @ApiProperty()
   createdAt!: string;
 }
+
+export class ListBoardListsResponseDto {
+  @ApiProperty({ type: [ListResponseDto] })
+  lists!: ListResponseDto[];
+}
