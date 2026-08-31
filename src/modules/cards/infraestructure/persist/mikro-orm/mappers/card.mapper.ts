@@ -1,5 +1,7 @@
 import { Card } from 'src/modules/cards/domain/entities/card.entity';
+import { CardAssignee } from 'src/modules/cards/domain/entities/card-assignee.entity';
 import { CardMikroEntity } from '../entities/card.mikro-entity';
+import { CardAssigneeMikroEntity } from '../entities/card_assignees.mikro-entity';
 
 export class CardMapper {
   static toDomain(entity: CardMikroEntity): Card {
@@ -29,6 +31,22 @@ export class CardMapper {
       createdAt: card.createdAt,
       updatedAt: card.updatedAt,
       archivedAt: card.archivedAt,
+    };
+  }
+
+  static assigneeToDomain(entity: CardAssigneeMikroEntity): CardAssignee {
+    return CardAssignee.fromPersistence({
+      cardId: entity.card.id,
+      userId: entity.user.id,
+      assignedAt: entity.assignedAt,
+    });
+  }
+
+  static assigneeToPersistence(assignee: CardAssignee) {
+    return {
+      card: assignee.cardId,
+      user: assignee.userId,
+      assignedAt: assignee.assignedAt,
     };
   }
 }

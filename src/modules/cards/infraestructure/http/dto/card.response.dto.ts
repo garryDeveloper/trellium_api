@@ -1,5 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+export class CardAssigneeResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty()
+  email!: string;
+}
+
 export class CardResponseDto {
   @ApiProperty()
   id!: string;
@@ -24,4 +35,7 @@ export class CardResponseDto {
 
   @ApiProperty()
   createdAt!: string;
+
+  @ApiProperty({ type: [CardAssigneeResponseDto] })
+  assignees!: CardAssigneeResponseDto[];
 }

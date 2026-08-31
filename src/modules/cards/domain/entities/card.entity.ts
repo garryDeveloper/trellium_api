@@ -55,6 +55,34 @@ export class Card extends Entity<string> {
     });
   }
 
+  moveTo(props: { listId: string; position: number }): Card {
+    return new Card({
+      ...this.props,
+      listId: props.listId,
+      position: props.position,
+      updatedAt: new Date(),
+    });
+  }
+
+  archive(): Card {
+    const now = new Date();
+    return new Card({
+      ...this.props,
+      status: 'archived',
+      archivedAt: now,
+      updatedAt: now,
+    });
+  }
+
+  unarchive(): Card {
+    return new Card({
+      ...this.props,
+      status: 'active',
+      archivedAt: null,
+      updatedAt: new Date(),
+    });
+  }
+
   get title(): string {
     return this.props.title;
   }
