@@ -8,11 +8,14 @@ import { MikroOrmBoardRepository } from './infrastructure/persistence/mikro-orm/
 import { BoardMikroEntity } from './infrastructure/persistence/mikro-orm/entities/board.mikro-entity';
 import { BoardMemberMikroEntity } from './infrastructure/persistence/mikro-orm/entities/board-member.mikro-entity';
 import { InvitationMikroEntity } from './infrastructure/persistence/mikro-orm/entities/invitation.mikro-entity';
+import { LabelMikroEntity } from './infrastructure/persistence/mikro-orm/entities/label.mikro-entity';
 import { BoardsController } from './infrastructure/http/controllers/boards.controller';
 import { BoardInvitationsController } from './infrastructure/http/controllers/board-invitations.controller';
 import { InvitationsController } from './infrastructure/http/controllers/invitations.controller';
 import { MeInvitationsController } from './infrastructure/http/controllers/me-invitations.controller';
 import { BoardMembersController } from './infrastructure/http/controllers/board-members.controller';
+import { BoardLabelsController } from './infrastructure/http/controllers/board-labels.controller';
+import { LabelsController } from './infrastructure/http/controllers/labels.controller';
 import { ChangeStatusUseCase } from './application/use-cases/change-status.use-case';
 import { ChangeNameUseCase } from './application/use-cases/change-name.use-case';
 import { DeleteBoardUseCase } from './application/use-cases/delete-board.use-case';
@@ -29,6 +32,12 @@ import { INVITATION_REPOSITORY } from './domain/ports/invitation.repository';
 import { MikroOrmInvitationRepository } from './infrastructure/persistence/mikro-orm/repositories/mikro-orm-invitation.repository';
 import { USER_DIRECTORY_PORT } from './application/ports/user-directory.port';
 import { IamUserDirectoryAdapter } from './infrastructure/adapters/iam-user-directory.adapter';
+import { LABEL_REPOSITORY } from './domain/ports/label.repository';
+import { MikroOrmLabelRepository } from './infrastructure/persistence/mikro-orm/repositories/mikro-orm-label.repository';
+import { CreateLabelUseCase } from './application/use-cases/create-label.use-case';
+import { ListBoardLabelsUseCase } from './application/use-cases/list-board-labels.use-case';
+import { UpdateLabelUseCase } from './application/use-cases/update-label.use-case';
+import { DeleteLabelUseCase } from './application/use-cases/delete-label.use-case';
 
 @Module({
   imports: [
@@ -36,6 +45,7 @@ import { IamUserDirectoryAdapter } from './infrastructure/adapters/iam-user-dire
       BoardMikroEntity,
       BoardMemberMikroEntity,
       InvitationMikroEntity,
+      LabelMikroEntity,
     ]),
     IamModule,
   ],
@@ -45,6 +55,8 @@ import { IamUserDirectoryAdapter } from './infrastructure/adapters/iam-user-dire
     InvitationsController,
     MeInvitationsController,
     BoardMembersController,
+    BoardLabelsController,
+    LabelsController,
   ],
   providers: [
     CreateBoardUseCase,
@@ -61,9 +73,14 @@ import { IamUserDirectoryAdapter } from './infrastructure/adapters/iam-user-dire
     RemoveMemberUseCase,
     ListBoardInvitationsUseCase,
     CancelInvitationUseCase,
+    CreateLabelUseCase,
+    ListBoardLabelsUseCase,
+    UpdateLabelUseCase,
+    DeleteLabelUseCase,
     { provide: BOARD_REPOSITORY, useClass: MikroOrmBoardRepository },
     { provide: INVITATION_REPOSITORY, useClass: MikroOrmInvitationRepository },
     { provide: USER_DIRECTORY_PORT, useClass: IamUserDirectoryAdapter },
+    { provide: LABEL_REPOSITORY, useClass: MikroOrmLabelRepository },
   ],
   exports: [BOARD_REPOSITORY],
 })

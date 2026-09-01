@@ -1,5 +1,6 @@
 import { Board } from '../../../domain/entities/board.entity';
 import { Invitation } from '../../../domain/entities/invitation.entity';
+import { Label } from '../../../domain/entities/label.entity';
 import { BoardMembershipSummary } from '../../../domain/ports/board.repository';
 import { InvitationSummary } from '../../../domain/ports/invitation.repository';
 import { BoardMemberSummary } from '../../../application/use-cases/list-board-members.use-case';
@@ -8,8 +9,18 @@ import { BoardListItemResponseDto } from '../dto/board-list-item.response.dto';
 import { InvitationResponseDto } from '../dto/invitation.response.dto';
 import { MyInvitationResponseDto } from '../dto/my-invitation.response.dto';
 import { BoardMemberResponseDto } from '../dto/board-member.response.dto';
+import { LabelResponseDto } from '../dto/label.response.dto';
 
 export class BoardResponseMapper {
+  static toLabelDto(label: Label): LabelResponseDto {
+    return {
+      id: label.id,
+      boardId: label.boardId,
+      name: label.name,
+      color: label.color,
+    };
+  }
+
   static toInvitationDto(invitation: Invitation): InvitationResponseDto {
     return {
       id: invitation.id,
