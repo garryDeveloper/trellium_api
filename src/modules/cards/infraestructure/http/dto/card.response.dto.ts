@@ -39,3 +39,8 @@ export class CardResponseDto {
   @ApiProperty({ type: [CardAssigneeResponseDto] })
   assignees!: CardAssigneeResponseDto[];
 }
+
+export class ListCardsResponseDto {
+  @ApiProperty({ type: [CardResponseDto] })
+  cards!: CardResponseDto[];
+}

@@ -2,11 +2,13 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -32,12 +34,17 @@ import { ListCardAssigneesUseCase } from '../../../application/use-cases/list-ca
 import { ArchiveCardUseCase } from '../../../application/use-cases/archive-card.use-case';
 import { UnarchiveCardUseCase } from '../../../application/use-cases/unarchive-card.use-case';
 import { DeleteCardUseCase } from '../../../application/use-cases/delete-card.use-case';
+import { ListCardsUseCase } from '../../../application/use-cases/list-cards.use-case';
 import { Card } from '../../../domain/entities/card.entity';
 import { CreateCardDto } from '../dto/create-card.dto';
 import { UpdateCardDto } from '../dto/update-card.dto';
 import { MoveCardDto } from '../dto/move-card.dto';
 import { AssignMemberDto } from '../dto/assign-member.dto';
-import { CardResponseDto } from '../dto/card.response.dto';
+import { ListCardsQueryDto } from '../dto/list-cards.query.dto';
+import {
+  CardResponseDto,
+  ListCardsResponseDto,
+} from '../dto/card.response.dto';
 import { CardResponseMapper } from '../mappers/card.response.mapper';
 
 @ApiTags('cards')
@@ -56,7 +63,28 @@ export class CardsController {
     private readonly archiveCardUseCase: ArchiveCardUseCase,
     private readonly unarchiveCardUseCase: UnarchiveCardUseCase,
     private readonly deleteCardUseCase: DeleteCardUseCase,
+    private readonly listCardsUseCase: ListCardsUseCase,
   ) {}
+
+  @Get('lists/:listId/cards')
+  @ApiOkResponse({ type: ListCardsResponseDto })
+  async listCards(
+    @Param('listId') listId: string,
+    @Query() query: ListCardsQueryDto,
+    @Req() req: FastifyRequest & { user: VerifiedTokenPayload },
+  ): Promise<ListCardsResponseDto> {
+    const cards = await this.listCardsUseCase.execute({
+      listId,
+      status: query.status ?? 'active',
+      currentUserId: req.user.sub,
+    });
+
+    const cardDtos = await Promise.all(
+      cards.map((card) => this.toResponseDto(card)),
+    );
+
+    return { cards: cardDtos };
+  }
 
   @Post('lists/:listId/cards')
   @HttpCode(HttpStatus.CREATED)

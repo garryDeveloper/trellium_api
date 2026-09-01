@@ -12,6 +12,7 @@ import { ListCardAssigneesUseCase } from './application/use-cases/list-card-assi
 import { ArchiveCardUseCase } from './application/use-cases/archive-card.use-case';
 import { UnarchiveCardUseCase } from './application/use-cases/unarchive-card.use-case';
 import { DeleteCardUseCase } from './application/use-cases/delete-card.use-case';
+import { ListCardsUseCase } from './application/use-cases/list-cards.use-case';
 import { CARD_REPOSITORY } from './domain/ports/card.repository';
 import { MikroOrmCardRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-card.repository';
 import { CardMikroEntity } from './infraestructure/persist/mikro-orm/entities/card.mikro-entity';
@@ -36,6 +37,7 @@ import { CardsController } from './infraestructure/http/controllers/cards.contro
     ArchiveCardUseCase,
     UnarchiveCardUseCase,
     DeleteCardUseCase,
+    ListCardsUseCase,
     { provide: CARD_REPOSITORY, useClass: MikroOrmCardRepository },
   ],
   exports: [CARD_REPOSITORY],

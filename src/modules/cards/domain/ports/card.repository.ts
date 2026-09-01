@@ -11,6 +11,10 @@ export interface CardRepository {
   createCard(card: Card): Promise<Card>;
   getNextPosition(listId: string): Promise<number>;
   findById(cardId: string): Promise<Card | null>;
+  findByListAndStatus(
+    listId: string,
+    status: 'active' | 'archived',
+  ): Promise<Card[]>;
   update(card: Card): Promise<Card>;
   countByList(listId: string): Promise<number>;
   shiftPositionsInList(

@@ -39,6 +39,21 @@ export class MikroOrmCardRepository implements CardRepository {
     return entity ? CardMapper.toDomain(entity) : null;
   }
 
+  async findByListAndStatus(
+    listId: string,
+    status: 'active' | 'archived',
+  ): Promise<Card[]> {
+    const entities = await this.em.find(
+      CardMikroEntity,
+      { list: listId, status },
+      {
+        orderBy:
+          status === 'archived' ? { archivedAt: 'desc' } : { position: 'asc' },
+      },
+    );
+    return entities.map((entity) => CardMapper.toDomain(entity));
+  }
+
   async update(card: Card): Promise<Card> {
     const ref = this.em.getReference(CardMikroEntity, card.id);
     this.em.assign(ref, CardMapper.toPersistence(card));
