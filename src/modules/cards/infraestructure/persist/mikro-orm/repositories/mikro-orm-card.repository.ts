@@ -2,12 +2,15 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import {
   AssigneeInfo,
+  CardLabelInfo,
   CardRepository,
 } from 'src/modules/cards/domain/ports/card.repository';
 import { CardMikroEntity } from '../entities/card.mikro-entity';
 import { CardAssigneeMikroEntity } from '../entities/card_assignees.mikro-entity';
+import { CardLabelMikroEntity } from '../entities/card_labels.mikro-entity';
 import { Card } from 'src/modules/cards/domain/entities/card.entity';
 import { CardAssignee } from 'src/modules/cards/domain/entities/card-assignee.entity';
+import { CardLabel } from 'src/modules/cards/domain/entities/card-label.entity';
 import { CardMapper } from '../mappers/card.mapper';
 
 @Injectable()
@@ -147,6 +150,46 @@ export class MikroOrmCardRepository implements CardRepository {
     const row = await this.em.findOne(CardAssigneeMikroEntity, {
       card: cardId,
       user: userId,
+    });
+
+    return row !== null;
+  }
+
+  async applyLabel(cardLabel: CardLabel): Promise<CardLabel> {
+    const row = this.em.create(
+      CardLabelMikroEntity,
+      CardMapper.cardLabelToPersistence(cardLabel),
+    );
+    await this.em.persist(row).flush();
+    return CardMapper.cardLabelToDomain(row);
+  }
+
+  async removeLabel(cardId: string, labelId: string): Promise<void> {
+    await this.em.nativeDelete(CardLabelMikroEntity, {
+      card: cardId,
+      label: labelId,
+    });
+  }
+
+  async findLabels(cardId: string): Promise<CardLabelInfo[]> {
+    const rows = await this.em.find(
+      CardLabelMikroEntity,
+      { card: cardId },
+      { populate: ['label', 'label.board'] },
+    );
+
+    return rows.map((row) => ({
+      id: row.label.id,
+      boardId: row.label.board.id,
+      name: row.label.name,
+      color: row.label.color,
+    }));
+  }
+
+  async isLabelApplied(cardId: string, labelId: string): Promise<boolean> {
+    const row = await this.em.findOne(CardLabelMikroEntity, {
+      card: cardId,
+      label: labelId,
     });
 
     return row !== null;

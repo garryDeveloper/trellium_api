@@ -16,23 +16,21 @@ import {
 } from 'src/modules/boards/domain/ports/board.repository';
 import { NotBoardMemberError } from 'src/modules/boards/domain/errors/not-board-member.error';
 
-interface UpdateCardCommand {
+interface RemoveLabelCommand {
   cardId: string;
-  title?: string;
-  description?: string | null;
-  dueDate?: Date | null;
+  labelId: string;
   currentUserId: string;
 }
 
 @Injectable()
-export class UpdateCardUseCase implements UseCase<UpdateCardCommand, Card> {
+export class RemoveLabelUseCase implements UseCase<RemoveLabelCommand, Card> {
   constructor(
     @Inject(CARD_REPOSITORY) private readonly cards: CardRepository,
     @Inject(LIST_REPOSITORY) private readonly lists: ListRepository,
     @Inject(BOARD_REPOSITORY) private readonly boards: BoardRepository,
   ) {}
 
-  async execute(command: UpdateCardCommand): Promise<Card> {
+  async execute(command: RemoveLabelCommand): Promise<Card> {
     const card = await this.cards.findById(command.cardId);
     if (!card) {
       throw new CardNotFoundError();
@@ -51,12 +49,8 @@ export class UpdateCardUseCase implements UseCase<UpdateCardCommand, Card> {
       throw new NotBoardMemberError();
     }
 
-    const updated = card.update({
-      title: command.title,
-      description: command.description,
-      dueDate: command.dueDate,
-    });
+    await this.cards.removeLabel(command.cardId, command.labelId);
 
-    return this.cards.update(updated);
+    return card;
   }
 }

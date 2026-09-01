@@ -1,11 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UseCase } from 'src/shared/application/use-case.interface';
 import { Card } from '../../domain/entities/card.entity';
+import { CardLabel } from '../../domain/entities/card-label.entity';
 import {
   CARD_REPOSITORY,
   type CardRepository,
 } from '../../domain/ports/card.repository';
 import { CardNotFoundError } from '../../domain/errors/card-not-found.error';
+import { LabelNotInSameBoardError } from '../../domain/errors/label-not-in-same-board.error';
 import {
   LIST_REPOSITORY,
   type ListRepository,
@@ -15,24 +17,28 @@ import {
   type BoardRepository,
 } from 'src/modules/boards/domain/ports/board.repository';
 import { NotBoardMemberError } from 'src/modules/boards/domain/errors/not-board-member.error';
+import {
+  LABEL_REPOSITORY,
+  type LabelRepository,
+} from 'src/modules/boards/domain/ports/label.repository';
+import { LabelNotFoundError } from 'src/modules/boards/domain/errors/label-not-found.error';
 
-interface UpdateCardCommand {
+interface ApplyLabelCommand {
   cardId: string;
-  title?: string;
-  description?: string | null;
-  dueDate?: Date | null;
+  labelId: string;
   currentUserId: string;
 }
 
 @Injectable()
-export class UpdateCardUseCase implements UseCase<UpdateCardCommand, Card> {
+export class ApplyLabelUseCase implements UseCase<ApplyLabelCommand, Card> {
   constructor(
     @Inject(CARD_REPOSITORY) private readonly cards: CardRepository,
     @Inject(LIST_REPOSITORY) private readonly lists: ListRepository,
     @Inject(BOARD_REPOSITORY) private readonly boards: BoardRepository,
+    @Inject(LABEL_REPOSITORY) private readonly labels: LabelRepository,
   ) {}
 
-  async execute(command: UpdateCardCommand): Promise<Card> {
+  async execute(command: ApplyLabelCommand): Promise<Card> {
     const card = await this.cards.findById(command.cardId);
     if (!card) {
       throw new CardNotFoundError();
@@ -51,12 +57,25 @@ export class UpdateCardUseCase implements UseCase<UpdateCardCommand, Card> {
       throw new NotBoardMemberError();
     }
 
-    const updated = card.update({
-      title: command.title,
-      description: command.description,
-      dueDate: command.dueDate,
-    });
+    const label = await this.labels.findById(command.labelId);
+    if (!label) {
+      throw new LabelNotFoundError();
+    }
 
-    return this.cards.update(updated);
+    if (label.boardId !== list.boardId) {
+      throw new LabelNotInSameBoardError();
+    }
+
+    const alreadyApplied = await this.cards.isLabelApplied(
+      command.cardId,
+      command.labelId,
+    );
+    if (!alreadyApplied) {
+      await this.cards.applyLabel(
+        CardLabel.create({ cardId: command.cardId, labelId: command.labelId }),
+      );
+    }
+
+    return card;
   }
 }

@@ -31,6 +31,9 @@ import { MoveCardUseCase } from '../../../application/use-cases/move-card.use-ca
 import { AssignMemberUseCase } from '../../../application/use-cases/assign-member.use-case';
 import { UnassignMemberUseCase } from '../../../application/use-cases/unassign-member.use-case';
 import { ListCardAssigneesUseCase } from '../../../application/use-cases/list-card-assignees.use-case';
+import { ApplyLabelUseCase } from '../../../application/use-cases/apply-label.use-case';
+import { RemoveLabelUseCase } from '../../../application/use-cases/remove-label.use-case';
+import { ListCardLabelsUseCase } from '../../../application/use-cases/list-card-labels.use-case';
 import { ArchiveCardUseCase } from '../../../application/use-cases/archive-card.use-case';
 import { UnarchiveCardUseCase } from '../../../application/use-cases/unarchive-card.use-case';
 import { DeleteCardUseCase } from '../../../application/use-cases/delete-card.use-case';
@@ -40,6 +43,7 @@ import { CreateCardDto } from '../dto/create-card.dto';
 import { UpdateCardDto } from '../dto/update-card.dto';
 import { MoveCardDto } from '../dto/move-card.dto';
 import { AssignMemberDto } from '../dto/assign-member.dto';
+import { ApplyLabelDto } from '../dto/apply-label.dto';
 import { ListCardsQueryDto } from '../dto/list-cards.query.dto';
 import {
   CardResponseDto,
@@ -60,6 +64,9 @@ export class CardsController {
     private readonly assignMemberUseCase: AssignMemberUseCase,
     private readonly unassignMemberUseCase: UnassignMemberUseCase,
     private readonly listCardAssigneesUseCase: ListCardAssigneesUseCase,
+    private readonly applyLabelUseCase: ApplyLabelUseCase,
+    private readonly removeLabelUseCase: RemoveLabelUseCase,
+    private readonly listCardLabelsUseCase: ListCardLabelsUseCase,
     private readonly archiveCardUseCase: ArchiveCardUseCase,
     private readonly unarchiveCardUseCase: UnarchiveCardUseCase,
     private readonly deleteCardUseCase: DeleteCardUseCase,
@@ -115,6 +122,12 @@ export class CardsController {
       cardId,
       title: dto.title,
       description: dto.description,
+      dueDate:
+        dto.dueDate === undefined
+          ? undefined
+          : dto.dueDate === null
+            ? null
+            : new Date(dto.dueDate),
       currentUserId: req.user.sub,
     });
 
@@ -173,6 +186,40 @@ export class CardsController {
     return this.toResponseDto(card);
   }
 
+  @Post('cards/:cardId/labels')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: CardResponseDto })
+  async applyLabel(
+    @Param('cardId') cardId: string,
+    @Body() dto: ApplyLabelDto,
+    @Req() req: FastifyRequest & { user: VerifiedTokenPayload },
+  ): Promise<CardResponseDto> {
+    const card = await this.applyLabelUseCase.execute({
+      cardId,
+      labelId: dto.labelId,
+      currentUserId: req.user.sub,
+    });
+
+    return this.toResponseDto(card);
+  }
+
+  @Delete('cards/:cardId/labels/:labelId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: CardResponseDto })
+  async removeLabel(
+    @Param('cardId') cardId: string,
+    @Param('labelId') labelId: string,
+    @Req() req: FastifyRequest & { user: VerifiedTokenPayload },
+  ): Promise<CardResponseDto> {
+    const card = await this.removeLabelUseCase.execute({
+      cardId,
+      labelId,
+      currentUserId: req.user.sub,
+    });
+
+    return this.toResponseDto(card);
+  }
+
   @Post('cards/:cardId/archive')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: CardResponseDto })
@@ -217,10 +264,11 @@ export class CardsController {
   }
 
   private async toResponseDto(card: Card): Promise<CardResponseDto> {
-    const assignees = await this.listCardAssigneesUseCase.execute({
-      cardId: card.id,
-    });
+    const [assignees, labels] = await Promise.all([
+      this.listCardAssigneesUseCase.execute({ cardId: card.id }),
+      this.listCardLabelsUseCase.execute({ cardId: card.id }),
+    ]);
 
-    return CardResponseMapper.toResponseDto(card, assignees);
+    return CardResponseMapper.toResponseDto(card, assignees, labels);
   }
 }

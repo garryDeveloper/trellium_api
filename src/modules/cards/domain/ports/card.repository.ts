@@ -1,10 +1,18 @@
 import { Card } from '../entities/card.entity';
 import { CardAssignee } from '../entities/card-assignee.entity';
+import { CardLabel } from '../entities/card-label.entity';
 
 export interface AssigneeInfo {
   userId: string;
   name: string;
   email: string;
+}
+
+export interface CardLabelInfo {
+  id: string;
+  boardId: string;
+  name: string;
+  color: string;
 }
 
 export interface CardRepository {
@@ -31,6 +39,10 @@ export interface CardRepository {
   unassignMember(cardId: string, userId: string): Promise<void>;
   findAssignees(cardId: string): Promise<AssigneeInfo[]>;
   isAssigned(cardId: string, userId: string): Promise<boolean>;
+  applyLabel(cardLabel: CardLabel): Promise<CardLabel>;
+  removeLabel(cardId: string, labelId: string): Promise<void>;
+  findLabels(cardId: string): Promise<CardLabelInfo[]>;
+  isLabelApplied(cardId: string, labelId: string): Promise<boolean>;
   deleteCard(cardId: string): Promise<void>;
 }
 

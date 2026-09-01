@@ -43,7 +43,11 @@ export class Card extends Entity<string> {
     return new Card(props);
   }
 
-  update(props: { title?: string; description?: string | null }): Card {
+  update(props: {
+    title?: string;
+    description?: string | null;
+    dueDate?: Date | null;
+  }): Card {
     return new Card({
       ...this.props,
       title: props.title !== undefined ? props.title : this.props.title,
@@ -51,6 +55,7 @@ export class Card extends Entity<string> {
         props.description !== undefined
           ? props.description
           : this.props.description,
+      dueDate: props.dueDate !== undefined ? props.dueDate : this.props.dueDate,
       updatedAt: new Date(),
     });
   }

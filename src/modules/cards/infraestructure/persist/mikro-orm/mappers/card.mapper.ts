@@ -1,7 +1,9 @@
 import { Card } from 'src/modules/cards/domain/entities/card.entity';
 import { CardAssignee } from 'src/modules/cards/domain/entities/card-assignee.entity';
+import { CardLabel } from 'src/modules/cards/domain/entities/card-label.entity';
 import { CardMikroEntity } from '../entities/card.mikro-entity';
 import { CardAssigneeMikroEntity } from '../entities/card_assignees.mikro-entity';
+import { CardLabelMikroEntity } from '../entities/card_labels.mikro-entity';
 
 export class CardMapper {
   static toDomain(entity: CardMikroEntity): Card {
@@ -47,6 +49,20 @@ export class CardMapper {
       card: assignee.cardId,
       user: assignee.userId,
       assignedAt: assignee.assignedAt,
+    };
+  }
+
+  static cardLabelToDomain(entity: CardLabelMikroEntity): CardLabel {
+    return CardLabel.fromPersistence({
+      cardId: entity.card.id,
+      labelId: entity.label.id,
+    });
+  }
+
+  static cardLabelToPersistence(cardLabel: CardLabel) {
+    return {
+      card: cardLabel.cardId,
+      label: cardLabel.labelId,
     };
   }
 }

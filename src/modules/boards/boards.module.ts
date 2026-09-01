@@ -82,6 +82,6 @@ import { DeleteLabelUseCase } from './application/use-cases/delete-label.use-cas
     { provide: USER_DIRECTORY_PORT, useClass: IamUserDirectoryAdapter },
     { provide: LABEL_REPOSITORY, useClass: MikroOrmLabelRepository },
   ],
-  exports: [BOARD_REPOSITORY],
+  exports: [BOARD_REPOSITORY, LABEL_REPOSITORY],
 })
 export class BoardsModule {}

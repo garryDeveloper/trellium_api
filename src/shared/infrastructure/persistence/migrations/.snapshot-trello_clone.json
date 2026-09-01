@@ -358,6 +358,88 @@
       "comment": null
     },
     {
+      "name": "card_labels",
+      "schema": "public",
+      "columns": {
+        "card_id": {
+          "name": "card_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": []
+        },
+        "label_id": {
+          "name": "label_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": []
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "card_id",
+            "label_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "card_labels_pkey",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "card_labels_card_id_foreign": {
+          "columnNames": [
+            "card_id"
+          ],
+          "constraintName": "card_labels_card_id_foreign",
+          "localTableName": "public.card_labels",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.cards",
+          "updateRule": "cascade",
+          "deleteRule": "cascade"
+        },
+        "card_labels_label_id_foreign": {
+          "columnNames": [
+            "label_id"
+          ],
+          "constraintName": "card_labels_label_id_foreign",
+          "localTableName": "public.card_labels",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.labels",
+          "updateRule": "cascade",
+          "deleteRule": "cascade"
+        }
+      },
+      "comment": null
+    },
+    {
       "name": "cards",
       "schema": "public",
       "columns": {
@@ -761,8 +843,7 @@
           "default": null,
           "comment": null,
           "collation": null,
-          "enumItems": [],
-          "mappedType": "uuid"
+          "enumItems": []
         },
         "color": {
           "name": "color",
@@ -778,8 +859,7 @@
           "default": null,
           "comment": null,
           "collation": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         },
         "created_at": {
           "name": "created_at",
@@ -795,8 +875,7 @@
           "default": null,
           "comment": null,
           "collation": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "id": {
           "name": "id",
@@ -812,8 +891,7 @@
           "default": null,
           "comment": null,
           "collation": null,
-          "enumItems": [],
-          "mappedType": "uuid"
+          "enumItems": []
         },
         "name": {
           "name": "name",
@@ -829,8 +907,7 @@
           "default": null,
           "comment": null,
           "collation": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         }
       },
       "indexes": [

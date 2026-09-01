@@ -11,6 +11,20 @@ export class CardAssigneeResponseDto {
   email!: string;
 }
 
+export class CardLabelResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  boardId!: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty()
+  color!: string;
+}
+
 export class CardResponseDto {
   @ApiProperty()
   id!: string;
@@ -38,6 +52,9 @@ export class CardResponseDto {
 
   @ApiProperty({ type: [CardAssigneeResponseDto] })
   assignees!: CardAssigneeResponseDto[];
+
+  @ApiProperty({ type: [CardLabelResponseDto] })
+  labels!: CardLabelResponseDto[];
 }
 
 export class ListCardsResponseDto {

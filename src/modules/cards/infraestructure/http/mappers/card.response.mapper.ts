@@ -1,9 +1,16 @@
 import { Card } from '../../../domain/entities/card.entity';
-import { AssigneeInfo } from '../../../domain/ports/card.repository';
+import {
+  AssigneeInfo,
+  CardLabelInfo,
+} from '../../../domain/ports/card.repository';
 import { CardResponseDto } from '../dto/card.response.dto';
 
 export class CardResponseMapper {
-  static toResponseDto(card: Card, assignees: AssigneeInfo[]): CardResponseDto {
+  static toResponseDto(
+    card: Card,
+    assignees: AssigneeInfo[],
+    labels: CardLabelInfo[],
+  ): CardResponseDto {
     return {
       id: card.id,
       title: card.title,
@@ -17,6 +24,12 @@ export class CardResponseMapper {
         id: assignee.userId,
         name: assignee.name,
         email: assignee.email,
+      })),
+      labels: labels.map((label) => ({
+        id: label.id,
+        boardId: label.boardId,
+        name: label.name,
+        color: label.color,
       })),
     };
   }
