@@ -25,6 +25,14 @@ export class CardLabelResponseDto {
   color!: string;
 }
 
+export class ChecklistProgressResponseDto {
+  @ApiProperty()
+  completed!: number;
+
+  @ApiProperty()
+  total!: number;
+}
+
 export class CardResponseDto {
   @ApiProperty()
   id!: string;
@@ -55,6 +63,9 @@ export class CardResponseDto {
 
   @ApiProperty({ type: [CardLabelResponseDto] })
   labels!: CardLabelResponseDto[];
+
+  @ApiProperty({ nullable: true, type: ChecklistProgressResponseDto })
+  checklistProgress!: ChecklistProgressResponseDto | null;
 }
 
 export class ListCardsResponseDto {

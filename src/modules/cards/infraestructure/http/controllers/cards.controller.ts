@@ -38,6 +38,7 @@ import { ArchiveCardUseCase } from '../../../application/use-cases/archive-card.
 import { UnarchiveCardUseCase } from '../../../application/use-cases/unarchive-card.use-case';
 import { DeleteCardUseCase } from '../../../application/use-cases/delete-card.use-case';
 import { ListCardsUseCase } from '../../../application/use-cases/list-cards.use-case';
+import { ListCardsChecklistProgressUseCase } from '../../../application/use-cases/list-cards-checklist-progress.use-case';
 import { Card } from '../../../domain/entities/card.entity';
 import { CreateCardDto } from '../dto/create-card.dto';
 import { UpdateCardDto } from '../dto/update-card.dto';
@@ -71,6 +72,7 @@ export class CardsController {
     private readonly unarchiveCardUseCase: UnarchiveCardUseCase,
     private readonly deleteCardUseCase: DeleteCardUseCase,
     private readonly listCardsUseCase: ListCardsUseCase,
+    private readonly listCardsChecklistProgressUseCase: ListCardsChecklistProgressUseCase,
   ) {}
 
   @Get('lists/:listId/cards')
@@ -86,11 +88,7 @@ export class CardsController {
       currentUserId: req.user.sub,
     });
 
-    const cardDtos = await Promise.all(
-      cards.map((card) => this.toResponseDto(card)),
-    );
-
-    return { cards: cardDtos };
+    return { cards: await this.toResponseDtos(cards) };
   }
 
   @Post('lists/:listId/cards')
@@ -264,11 +262,30 @@ export class CardsController {
   }
 
   private async toResponseDto(card: Card): Promise<CardResponseDto> {
-    const [assignees, labels] = await Promise.all([
-      this.listCardAssigneesUseCase.execute({ cardId: card.id }),
-      this.listCardLabelsUseCase.execute({ cardId: card.id }),
+    const [dto] = await this.toResponseDtos([card]);
+    return dto;
+  }
+
+  /**
+   * Resuelve responsables, etiquetas y progreso de checklist de todas las
+   * tarjetas con tres queries en total, en vez de tres por tarjeta.
+   */
+  private async toResponseDtos(cards: Card[]): Promise<CardResponseDto[]> {
+    const cardIds = cards.map((card) => card.id);
+
+    const [assigneesByCard, labelsByCard, progressByCard] = await Promise.all([
+      this.listCardAssigneesUseCase.execute({ cardIds }),
+      this.listCardLabelsUseCase.execute({ cardIds }),
+      this.listCardsChecklistProgressUseCase.execute({ cardIds }),
     ]);
 
-    return CardResponseMapper.toResponseDto(card, assignees, labels);
+    return cards.map((card) =>
+      CardResponseMapper.toResponseDto(
+        card,
+        assigneesByCard.get(card.id) ?? [],
+        labelsByCard.get(card.id) ?? [],
+        progressByCard.get(card.id) ?? null,
+      ),
+    );
   }
 }

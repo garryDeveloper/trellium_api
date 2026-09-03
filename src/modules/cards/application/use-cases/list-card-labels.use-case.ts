@@ -7,19 +7,20 @@ import {
 } from '../../domain/ports/card.repository';
 
 interface ListCardLabelsQuery {
-  cardId: string;
+  cardIds: string[];
 }
 
+/** Mismo criterio que `ListCardAssigneesUseCase`: una query para N tarjetas. */
 @Injectable()
 export class ListCardLabelsUseCase implements UseCase<
   ListCardLabelsQuery,
-  CardLabelInfo[]
+  Map<string, CardLabelInfo[]>
 > {
   constructor(
     @Inject(CARD_REPOSITORY) private readonly cards: CardRepository,
   ) {}
 
-  execute(query: ListCardLabelsQuery): Promise<CardLabelInfo[]> {
-    return this.cards.findLabels(query.cardId);
+  execute(query: ListCardLabelsQuery): Promise<Map<string, CardLabelInfo[]>> {
+    return this.cards.findLabelsByCards(query.cardIds);
   }
 }

@@ -16,12 +16,24 @@ import { ArchiveCardUseCase } from './application/use-cases/archive-card.use-cas
 import { UnarchiveCardUseCase } from './application/use-cases/unarchive-card.use-case';
 import { DeleteCardUseCase } from './application/use-cases/delete-card.use-case';
 import { ListCardsUseCase } from './application/use-cases/list-cards.use-case';
+import { CreateChecklistUseCase } from './application/use-cases/create-checklist.use-case';
+import { AddChecklistItemUseCase } from './application/use-cases/add-checklist-item.use-case';
+import { ListCardChecklistsUseCase } from './application/use-cases/list-card-checklists.use-case';
+import { UpdateChecklistItemUseCase } from './application/use-cases/update-checklist-item.use-case';
+import { DeleteChecklistItemUseCase } from './application/use-cases/delete-checklist-item.use-case';
+import { DeleteChecklistUseCase } from './application/use-cases/delete-checklist.use-case';
+import { ListCardsChecklistProgressUseCase } from './application/use-cases/list-cards-checklist-progress.use-case';
 import { CARD_REPOSITORY } from './domain/ports/card.repository';
+import { CHECKLIST_REPOSITORY } from './domain/ports/checklist.repository';
 import { MikroOrmCardRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-card.repository';
+import { MikroOrmChecklistRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-checklist.repository';
 import { CardMikroEntity } from './infraestructure/persist/mikro-orm/entities/card.mikro-entity';
 import { CardAssigneeMikroEntity } from './infraestructure/persist/mikro-orm/entities/card_assignees.mikro-entity';
 import { CardLabelMikroEntity } from './infraestructure/persist/mikro-orm/entities/card_labels.mikro-entity';
+import { ChecklistMikroEntity } from './infraestructure/persist/mikro-orm/entities/checklist.mikro-entity';
+import { ChecklistItemMikroEntity } from './infraestructure/persist/mikro-orm/entities/checklist-item.mikro-entity';
 import { CardsController } from './infraestructure/http/controllers/cards.controller';
+import { ChecklistsController } from './infraestructure/http/controllers/checklists.controller';
 
 @Module({
   imports: [
@@ -29,12 +41,14 @@ import { CardsController } from './infraestructure/http/controllers/cards.contro
       CardMikroEntity,
       CardAssigneeMikroEntity,
       CardLabelMikroEntity,
+      ChecklistMikroEntity,
+      ChecklistItemMikroEntity,
     ]),
     IamModule,
     ListModule,
     BoardsModule,
   ],
-  controllers: [CardsController],
+  controllers: [CardsController, ChecklistsController],
   providers: [
     CreateCardUseCase,
     UpdateCardUseCase,
@@ -49,8 +63,16 @@ import { CardsController } from './infraestructure/http/controllers/cards.contro
     UnarchiveCardUseCase,
     DeleteCardUseCase,
     ListCardsUseCase,
+    CreateChecklistUseCase,
+    AddChecklistItemUseCase,
+    ListCardChecklistsUseCase,
+    UpdateChecklistItemUseCase,
+    DeleteChecklistItemUseCase,
+    DeleteChecklistUseCase,
+    ListCardsChecklistProgressUseCase,
     { provide: CARD_REPOSITORY, useClass: MikroOrmCardRepository },
+    { provide: CHECKLIST_REPOSITORY, useClass: MikroOrmChecklistRepository },
   ],
-  exports: [CARD_REPOSITORY],
+  exports: [CARD_REPOSITORY, CHECKLIST_REPOSITORY],
 })
 export class CardModule {}

@@ -19,6 +19,12 @@ export interface CardRepository {
   createCard(card: Card): Promise<Card>;
   getNextPosition(listId: string): Promise<number>;
   findById(cardId: string): Promise<Card | null>;
+  /**
+   * Tablero dueño de una tarjeta, resuelto con un join contra `lists`. Evita el
+   * ida y vuelta tarjeta -> lista -> tablero que necesita cada autorización.
+   * Devuelve `null` si la tarjeta no existe.
+   */
+  findBoardIdByCard(cardId: string): Promise<string | null>;
   findByListAndStatus(
     listId: string,
     status: 'active' | 'archived',
@@ -37,11 +43,14 @@ export interface CardRepository {
   shiftPositionsForInsertion(listId: string, atPosition: number): Promise<void>;
   assignMember(assignee: CardAssignee): Promise<CardAssignee>;
   unassignMember(cardId: string, userId: string): Promise<void>;
-  findAssignees(cardId: string): Promise<AssigneeInfo[]>;
+  /** Agrupados por `cardId`. Recibe todas las tarjetas juntas para no emitir
+   *  una query por tarjeta al listar una lista. */
+  findAssigneesByCards(cardIds: string[]): Promise<Map<string, AssigneeInfo[]>>;
   isAssigned(cardId: string, userId: string): Promise<boolean>;
   applyLabel(cardLabel: CardLabel): Promise<CardLabel>;
   removeLabel(cardId: string, labelId: string): Promise<void>;
-  findLabels(cardId: string): Promise<CardLabelInfo[]>;
+  /** Agrupadas por `cardId`, por el mismo motivo que `findAssigneesByCards`. */
+  findLabelsByCards(cardIds: string[]): Promise<Map<string, CardLabelInfo[]>>;
   isLabelApplied(cardId: string, labelId: string): Promise<boolean>;
   deleteCard(cardId: string): Promise<void>;
 }

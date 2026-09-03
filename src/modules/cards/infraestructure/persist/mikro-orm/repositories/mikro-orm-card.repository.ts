@@ -42,6 +42,18 @@ export class MikroOrmCardRepository implements CardRepository {
     return entity ? CardMapper.toDomain(entity) : null;
   }
 
+  async findBoardIdByCard(cardId: string): Promise<string | null> {
+    const [row] = await this.em.getConnection().execute<{ boardId: string }[]>(
+      `select l.board_id as "boardId"
+           from cards c
+           join lists l on l.id = c.list_id
+          where c.id = ?`,
+      [cardId],
+    );
+
+    return row?.boardId ?? null;
+  }
+
   async findByListAndStatus(
     listId: string,
     status: 'active' | 'archived',
@@ -132,18 +144,31 @@ export class MikroOrmCardRepository implements CardRepository {
     });
   }
 
-  async findAssignees(cardId: string): Promise<AssigneeInfo[]> {
+  async findAssigneesByCards(
+    cardIds: string[],
+  ): Promise<Map<string, AssigneeInfo[]>> {
+    const grouped = new Map<string, AssigneeInfo[]>();
+    if (cardIds.length === 0) {
+      return grouped;
+    }
+
     const rows = await this.em.find(
       CardAssigneeMikroEntity,
-      { card: cardId },
+      { card: { $in: cardIds } },
       { populate: ['user'], orderBy: { assignedAt: 'asc' } },
     );
 
-    return rows.map((row) => ({
-      userId: row.user.id,
-      name: row.user.name,
-      email: row.user.email,
-    }));
+    for (const row of rows) {
+      const assignees = grouped.get(row.card.id) ?? [];
+      assignees.push({
+        userId: row.user.id,
+        name: row.user.name,
+        email: row.user.email,
+      });
+      grouped.set(row.card.id, assignees);
+    }
+
+    return grouped;
   }
 
   async isAssigned(cardId: string, userId: string): Promise<boolean> {
@@ -171,19 +196,32 @@ export class MikroOrmCardRepository implements CardRepository {
     });
   }
 
-  async findLabels(cardId: string): Promise<CardLabelInfo[]> {
+  async findLabelsByCards(
+    cardIds: string[],
+  ): Promise<Map<string, CardLabelInfo[]>> {
+    const grouped = new Map<string, CardLabelInfo[]>();
+    if (cardIds.length === 0) {
+      return grouped;
+    }
+
     const rows = await this.em.find(
       CardLabelMikroEntity,
-      { card: cardId },
+      { card: { $in: cardIds } },
       { populate: ['label', 'label.board'] },
     );
 
-    return rows.map((row) => ({
-      id: row.label.id,
-      boardId: row.label.board.id,
-      name: row.label.name,
-      color: row.label.color,
-    }));
+    for (const row of rows) {
+      const labels = grouped.get(row.card.id) ?? [];
+      labels.push({
+        id: row.label.id,
+        boardId: row.label.board.id,
+        name: row.label.name,
+        color: row.label.color,
+      });
+      grouped.set(row.card.id, labels);
+    }
+
+    return grouped;
   }
 
   async isLabelApplied(cardId: string, labelId: string): Promise<boolean> {

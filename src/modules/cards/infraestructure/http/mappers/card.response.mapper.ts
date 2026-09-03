@@ -3,6 +3,7 @@ import {
   AssigneeInfo,
   CardLabelInfo,
 } from '../../../domain/ports/card.repository';
+import { ChecklistProgress } from '../../../domain/ports/checklist.repository';
 import { CardResponseDto } from '../dto/card.response.dto';
 
 export class CardResponseMapper {
@@ -10,6 +11,7 @@ export class CardResponseMapper {
     card: Card,
     assignees: AssigneeInfo[],
     labels: CardLabelInfo[],
+    checklistProgress: ChecklistProgress | null,
   ): CardResponseDto {
     return {
       id: card.id,
@@ -31,6 +33,7 @@ export class CardResponseMapper {
         name: label.name,
         color: label.color,
       })),
+      checklistProgress,
     };
   }
 }
