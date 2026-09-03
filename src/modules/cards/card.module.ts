@@ -23,17 +23,35 @@ import { UpdateChecklistItemUseCase } from './application/use-cases/update-check
 import { DeleteChecklistItemUseCase } from './application/use-cases/delete-checklist-item.use-case';
 import { DeleteChecklistUseCase } from './application/use-cases/delete-checklist.use-case';
 import { ListCardsChecklistProgressUseCase } from './application/use-cases/list-cards-checklist-progress.use-case';
+import { CreateCommentUseCase } from './application/use-cases/create-comment.use-case';
+import { UpdateCommentUseCase } from './application/use-cases/update-comment.use-case';
+import { RemoveCommentUseCase } from './application/use-cases/delete-comment.use-case';
+import { ListCardCommentsUseCase } from './application/use-cases/list-card-comments.use-case';
+import { CreateAttachmentUseCase } from './application/use-cases/create-attachment.use-case';
+import { ListCardAttachmentsUseCase } from './application/use-cases/list-card-attachments.use-case';
+import { GetAttachmentFileUseCase } from './application/use-cases/get-attachment-file.use-case';
+import { DeleteAttachmentUseCase } from './application/use-cases/delete-attachment.use-case';
 import { CARD_REPOSITORY } from './domain/ports/card.repository';
 import { CHECKLIST_REPOSITORY } from './domain/ports/checklist.repository';
+import { COMMENT_REPOSITORY } from './domain/ports/comment.repository';
+import { ATTACHMENT_REPOSITORY } from './domain/ports/attachment.repository';
+import { ATTACHMENT_STORAGE } from './domain/ports/attachment-storage.port';
 import { MikroOrmCardRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-card.repository';
 import { MikroOrmChecklistRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-checklist.repository';
+import { MikroOrmCommentRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-comment.repository';
+import { MikroOrmAttachmentRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-attachment.repository';
+import { LocalAttachmentStorage } from './infraestructure/storage/local-attachment.storage';
 import { CardMikroEntity } from './infraestructure/persist/mikro-orm/entities/card.mikro-entity';
 import { CardAssigneeMikroEntity } from './infraestructure/persist/mikro-orm/entities/card_assignees.mikro-entity';
 import { CardLabelMikroEntity } from './infraestructure/persist/mikro-orm/entities/card_labels.mikro-entity';
 import { ChecklistMikroEntity } from './infraestructure/persist/mikro-orm/entities/checklist.mikro-entity';
 import { ChecklistItemMikroEntity } from './infraestructure/persist/mikro-orm/entities/checklist-item.mikro-entity';
+import { CommentMikroEntity } from './infraestructure/persist/mikro-orm/entities/comment.mikro-entity';
+import { AttachmentMikroEntity } from './infraestructure/persist/mikro-orm/entities/attachment.mikro-entity';
 import { CardsController } from './infraestructure/http/controllers/cards.controller';
 import { ChecklistsController } from './infraestructure/http/controllers/checklists.controller';
+import { CommentController } from './infraestructure/http/controllers/comment.controller';
+import { AttachmentsController } from './infraestructure/http/controllers/attachments.controller';
 
 @Module({
   imports: [
@@ -43,12 +61,19 @@ import { ChecklistsController } from './infraestructure/http/controllers/checkli
       CardLabelMikroEntity,
       ChecklistMikroEntity,
       ChecklistItemMikroEntity,
+      CommentMikroEntity,
+      AttachmentMikroEntity,
     ]),
     IamModule,
     ListModule,
     BoardsModule,
   ],
-  controllers: [CardsController, ChecklistsController],
+  controllers: [
+    CardsController,
+    ChecklistsController,
+    CommentController,
+    AttachmentsController,
+  ],
   providers: [
     CreateCardUseCase,
     UpdateCardUseCase,
@@ -70,9 +95,25 @@ import { ChecklistsController } from './infraestructure/http/controllers/checkli
     DeleteChecklistItemUseCase,
     DeleteChecklistUseCase,
     ListCardsChecklistProgressUseCase,
+    CreateCommentUseCase,
+    UpdateCommentUseCase,
+    RemoveCommentUseCase,
+    ListCardCommentsUseCase,
+    CreateAttachmentUseCase,
+    ListCardAttachmentsUseCase,
+    GetAttachmentFileUseCase,
+    DeleteAttachmentUseCase,
     { provide: CARD_REPOSITORY, useClass: MikroOrmCardRepository },
     { provide: CHECKLIST_REPOSITORY, useClass: MikroOrmChecklistRepository },
+    { provide: COMMENT_REPOSITORY, useClass: MikroOrmCommentRepository },
+    { provide: ATTACHMENT_REPOSITORY, useClass: MikroOrmAttachmentRepository },
+    { provide: ATTACHMENT_STORAGE, useClass: LocalAttachmentStorage },
   ],
-  exports: [CARD_REPOSITORY, CHECKLIST_REPOSITORY],
+  exports: [
+    CARD_REPOSITORY,
+    CHECKLIST_REPOSITORY,
+    COMMENT_REPOSITORY,
+    ATTACHMENT_REPOSITORY,
+  ],
 })
 export class CardModule {}

@@ -11,7 +11,7 @@ export const CardMikroEntity = defineEntity({
       .primary()
       .onCreate(() => randomUUID()),
     title: p.string(),
-    description: p.string().nullable(),
+    description: p.text().nullable(),
     position: p.integer().fieldName('position'),
     status: p
       .enum(['active', 'archived'])

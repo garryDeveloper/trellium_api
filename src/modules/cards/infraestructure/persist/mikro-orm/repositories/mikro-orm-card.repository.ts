@@ -16,7 +16,6 @@ import { CardMapper } from '../mappers/card.mapper';
 @Injectable()
 export class MikroOrmCardRepository implements CardRepository {
   constructor(private readonly em: EntityManager) {}
-
   async createCard(card: Card): Promise<Card> {
     const cardEntity = this.em.create(
       CardMikroEntity,
