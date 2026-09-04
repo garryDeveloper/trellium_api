@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { USER_REPOSITORY } from 'src/modules/iam/domain/ports/user.repository';
 import type { UserRepository } from 'src/modules/iam/domain/ports/user.repository';
-import { UserDirectoryPort } from '../../application/ports/user-directory.port';
+import {
+  DirectoryUser,
+  UserDirectoryPort,
+} from '../../application/ports/user-directory.port';
 
 @Injectable()
 export class IamUserDirectoryAdapter implements UserDirectoryPort {
@@ -9,13 +12,8 @@ export class IamUserDirectoryAdapter implements UserDirectoryPort {
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
   ) {}
 
-  async findUserIdByEmail(email: string): Promise<string | null> {
-    const user = await this.users.findByEmail(email);
-    return user ? user.id : null;
-  }
-
-  async findUserNameById(userId: string): Promise<string | null> {
+  async findUserById(userId: string): Promise<DirectoryUser | null> {
     const user = await this.users.findById(userId);
-    return user ? user.name : null;
+    return user ? { id: user.id, name: user.name } : null;
   }
 }

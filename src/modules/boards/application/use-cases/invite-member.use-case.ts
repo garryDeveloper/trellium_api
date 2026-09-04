@@ -10,6 +10,10 @@ import type { UserDirectoryPort } from '../ports/user-directory.port';
 import { NotBoardMemberError } from '../../domain/errors/not-board-member.error';
 import { AlreadyBoardMemberError } from '../../domain/errors/already-board-member.error';
 import { InvitationAlreadyPendingError } from '../../domain/errors/invitation-already-pending.error';
+import {
+  NOTIFICATION_PUBLISHER,
+  type NotificationPublisherPort,
+} from 'src/shared/application/ports/notification-publisher.port';
 
 export interface InviteMemberCommand {
   boardId: string;
@@ -28,6 +32,8 @@ export class InviteMemberUseCase implements UseCase<
     private readonly invitations: InvitationRepository,
     @Inject(USER_DIRECTORY_PORT)
     private readonly userDirectory: UserDirectoryPort,
+    @Inject(NOTIFICATION_PUBLISHER)
+    private readonly notifications: NotificationPublisherPort,
   ) {}
 
   async execute(command: InviteMemberCommand): Promise<Invitation> {
@@ -71,6 +77,29 @@ export class InviteMemberUseCase implements UseCase<
       invitedByUserId: command.invitedByUserId,
     });
 
-    return await this.invitations.create(invitation);
+    const created = await this.invitations.create(invitation);
+
+    // Se invita por email y el invitado puede no tener cuenta todavía: sin
+    // usuario no hay a quién notificar, y esa persona va a ver la invitación
+    // en `/me/invitations` cuando se registre. `invitedUserId` ya se resolvió
+    // arriba, así que no hay query extra.
+    if (invitedUserId) {
+      const actor = await this.userDirectory.findUserNameById(
+        command.invitedByUserId,
+      );
+
+      await this.notifications.publish([
+        {
+          userId: invitedUserId,
+          type: 'board_invited',
+          actorId: command.invitedByUserId,
+          actorName: actor ?? 'Alguien',
+          boardId: board.id,
+          boardName: board.name,
+        },
+      ]);
+    }
+
+    return created;
   }
 }

@@ -31,6 +31,7 @@ import { CancelInvitationUseCase } from './application/use-cases/cancel-invitati
 import { INVITATION_REPOSITORY } from './domain/ports/invitation.repository';
 import { MikroOrmInvitationRepository } from './infrastructure/persistence/mikro-orm/repositories/mikro-orm-invitation.repository';
 import { USER_DIRECTORY_PORT } from './application/ports/user-directory.port';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { IamUserDirectoryAdapter } from './infrastructure/adapters/iam-user-directory.adapter';
 import { LABEL_REPOSITORY } from './domain/ports/label.repository';
 import { MikroOrmLabelRepository } from './infrastructure/persistence/mikro-orm/repositories/mikro-orm-label.repository';
@@ -41,6 +42,7 @@ import { DeleteLabelUseCase } from './application/use-cases/delete-label.use-cas
 
 @Module({
   imports: [
+    NotificationsModule,
     MikroOrmModule.forFeature([
       BoardMikroEntity,
       BoardMemberMikroEntity,

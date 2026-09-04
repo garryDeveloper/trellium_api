@@ -29,6 +29,11 @@ export interface CommentRepository {
   updateComment(comment: Comment): Promise<CommentWithAuthor>;
   findCommentById(commentId: string): Promise<Comment | null>;
   /**
+   * Ids de quienes ya comentaron la tarjeta, sin repetir. Se usa para saber a
+   * quién notificar sin traer los comentarios enteros.
+   */
+  findDistinctAuthorIdsByCard(cardId: string): Promise<string[]>;
+  /**
    * Resuelve autor + dueño del tablero + membresía en una sola query.
    * Recorrer comment -> tarjeta -> lista -> tablero y luego consultar la
    * membresía costaría cuatro round-trips; el join los colapsa en uno.

@@ -36,6 +36,9 @@ import { CHECKLIST_REPOSITORY } from './domain/ports/checklist.repository';
 import { COMMENT_REPOSITORY } from './domain/ports/comment.repository';
 import { ATTACHMENT_REPOSITORY } from './domain/ports/attachment.repository';
 import { ATTACHMENT_STORAGE } from './domain/ports/attachment-storage.port';
+import { USER_DIRECTORY_PORT } from './application/ports/user-directory.port';
+import { IamUserDirectoryAdapter } from './infraestructure/adapters/iam-user-directory.adapter';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { MikroOrmCardRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-card.repository';
 import { MikroOrmChecklistRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-checklist.repository';
 import { MikroOrmCommentRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-comment.repository';
@@ -67,6 +70,7 @@ import { AttachmentsController } from './infraestructure/http/controllers/attach
     IamModule,
     ListModule,
     BoardsModule,
+    NotificationsModule,
   ],
   controllers: [
     CardsController,
@@ -108,6 +112,7 @@ import { AttachmentsController } from './infraestructure/http/controllers/attach
     { provide: COMMENT_REPOSITORY, useClass: MikroOrmCommentRepository },
     { provide: ATTACHMENT_REPOSITORY, useClass: MikroOrmAttachmentRepository },
     { provide: ATTACHMENT_STORAGE, useClass: LocalAttachmentStorage },
+    { provide: USER_DIRECTORY_PORT, useClass: IamUserDirectoryAdapter },
   ],
   exports: [
     CARD_REPOSITORY,

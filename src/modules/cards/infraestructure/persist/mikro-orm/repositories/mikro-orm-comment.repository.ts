@@ -93,6 +93,16 @@ export class MikroOrmCommentRepository implements CommentRepository {
     return CommentMapper.toDomainWithAuthor(commentEntity);
   }
 
+  async findDistinctAuthorIdsByCard(cardId: string): Promise<string[]> {
+    const rows = await this.em
+      .getConnection()
+      .execute<
+        { authorId: string }[]
+      >(`select distinct author_id as "authorId" from comments where card_id = ?`, [cardId]);
+
+    return rows.map((row) => row.authorId);
+  }
+
   async findCommentsByCard(cardId: string): Promise<CommentWithAuthor[]> {
     const comments = await this.em.find(
       CommentMikroEntity,

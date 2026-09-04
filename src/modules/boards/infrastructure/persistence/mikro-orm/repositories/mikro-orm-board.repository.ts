@@ -40,6 +40,22 @@ export class MikroOrmBoardRepository implements BoardRepository {
 
     return row !== null;
   }
+  async filterMemberBoardIds(
+    userId: string,
+    boardIds: string[],
+  ): Promise<string[]> {
+    if (boardIds.length === 0) {
+      return [];
+    }
+
+    const rows = await this.em.find(BoardMemberMikroEntity, {
+      user: userId,
+      board: { $in: boardIds },
+    });
+
+    return rows.map((row) => row.board.id);
+  }
+
   async update(board: Board): Promise<Board> {
     const ref = this.em.getReference(BoardMikroEntity, board.id);
     this.em.assign(ref, BoardMapper.toPersistence(board));

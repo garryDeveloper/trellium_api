@@ -17,6 +17,14 @@ import {
   type BoardRepository,
 } from 'src/modules/boards/domain/ports/board.repository';
 import { NotBoardMemberError } from 'src/modules/boards/domain/errors/not-board-member.error';
+import {
+  NOTIFICATION_PUBLISHER,
+  type NotificationPublisherPort,
+} from 'src/shared/application/ports/notification-publisher.port';
+import {
+  USER_DIRECTORY_PORT,
+  type UserDirectoryPort,
+} from '../ports/user-directory.port';
 
 interface AssignMemberCommand {
   cardId: string;
@@ -30,6 +38,10 @@ export class AssignMemberUseCase implements UseCase<AssignMemberCommand, Card> {
     @Inject(CARD_REPOSITORY) private readonly cards: CardRepository,
     @Inject(LIST_REPOSITORY) private readonly lists: ListRepository,
     @Inject(BOARD_REPOSITORY) private readonly boards: BoardRepository,
+    @Inject(NOTIFICATION_PUBLISHER)
+    private readonly notifications: NotificationPublisherPort,
+    @Inject(USER_DIRECTORY_PORT)
+    private readonly userDirectory: UserDirectoryPort,
   ) {}
 
   async execute(command: AssignMemberCommand): Promise<Card> {
@@ -67,6 +79,28 @@ export class AssignMemberUseCase implements UseCase<AssignMemberCommand, Card> {
       await this.cards.assignMember(
         CardAssignee.create({ cardId: command.cardId, userId: command.userId }),
       );
+
+      // Dentro del `if`: reasignar a alguien que ya estaba no vuelve a
+      // notificarlo. Y nadie se autonotifica al asignarse a sí mismo.
+      if (command.userId !== command.currentUserId) {
+        const board = await this.boards.findById(list.boardId);
+        const actor = await this.userDirectory.findUserById(
+          command.currentUserId,
+        );
+
+        await this.notifications.publish([
+          {
+            userId: command.userId,
+            type: 'card_assigned',
+            actorId: command.currentUserId,
+            actorName: actor?.name ?? 'Alguien',
+            boardId: list.boardId,
+            boardName: board?.name ?? '',
+            cardId: card.id,
+            cardTitle: card.title,
+          },
+        ]);
+      }
     }
 
     return card;

@@ -21,6 +21,14 @@ import {
   type CommentRepository,
   type CommentWithAuthor,
 } from '../../domain/ports/comment.repository';
+import {
+  NOTIFICATION_PUBLISHER,
+  type NotificationPublisherPort,
+} from 'src/shared/application/ports/notification-publisher.port';
+import {
+  USER_DIRECTORY_PORT,
+  type UserDirectoryPort,
+} from '../ports/user-directory.port';
 
 interface CreateCommentCommand {
   cardId: string;
@@ -38,6 +46,10 @@ export class CreateCommentUseCase implements UseCase<
     @Inject(COMMENT_REPOSITORY) private readonly comments: CommentRepository,
     @Inject(LIST_REPOSITORY) private readonly lists: ListRepository,
     @Inject(BOARD_REPOSITORY) private readonly boards: BoardRepository,
+    @Inject(NOTIFICATION_PUBLISHER)
+    private readonly notifications: NotificationPublisherPort,
+    @Inject(USER_DIRECTORY_PORT)
+    private readonly userDirectory: UserDirectoryPort,
   ) {}
 
   async execute(command: CreateCommentCommand): Promise<CommentWithAuthor> {
@@ -66,6 +78,62 @@ export class CreateCommentUseCase implements UseCase<
       authorId: command.currentUserId,
     });
 
-    return this.comments.createComment(newComment);
+    // Los autores previos se leen ANTES de insertar, para que el comentario
+    // recién creado no cuente como "comentario previo" del propio autor.
+    const previousAuthorIds = await this.comments.findDistinctAuthorIdsByCard(
+      command.cardId,
+    );
+
+    const created = await this.comments.createComment(newComment);
+
+    await this.notifyParticipants(
+      command,
+      list.boardId,
+      card.title,
+      previousAuthorIds,
+    );
+
+    return created;
+  }
+
+  /**
+   * Regla 16 de `domain.md`: se notifica a los participantes de la tarjeta
+   * —asignados y autores de comentarios previos— menos a quien comenta.
+   */
+  private async notifyParticipants(
+    command: CreateCommentCommand,
+    boardId: string,
+    cardTitle: string,
+    previousAuthorIds: string[],
+  ): Promise<void> {
+    const assigneesByCard = await this.cards.findAssigneesByCards([
+      command.cardId,
+    ]);
+    const assigneeIds = (assigneesByCard.get(command.cardId) ?? []).map(
+      (assignee) => assignee.userId,
+    );
+
+    const recipients = new Set([...assigneeIds, ...previousAuthorIds]);
+    recipients.delete(command.currentUserId);
+
+    if (recipients.size === 0) {
+      return;
+    }
+
+    const board = await this.boards.findById(boardId);
+    const actor = await this.userDirectory.findUserById(command.currentUserId);
+
+    await this.notifications.publish(
+      [...recipients].map((userId) => ({
+        userId,
+        type: 'card_commented' as const,
+        actorId: command.currentUserId,
+        actorName: actor?.name ?? 'Alguien',
+        boardId,
+        boardName: board?.name ?? '',
+        cardId: command.cardId,
+        cardTitle,
+      })),
+    );
   }
 }
