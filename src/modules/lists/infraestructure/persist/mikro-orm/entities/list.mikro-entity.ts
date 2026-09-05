@@ -1,6 +1,6 @@
-import { defineEntity, InferEntity, p } from "@mikro-orm/core";
-import { randomUUID } from "crypto";
-import { BoardMikroEntity } from "src/modules/boards/infrastructure/persistence/mikro-orm/entities/board.mikro-entity";
+import { defineEntity, InferEntity, p } from '@mikro-orm/core';
+import { randomUUID } from 'crypto';
+import { BoardMikroEntity } from 'src/modules/boards/infrastructure/persistence/mikro-orm/entities/board.mikro-entity';
 
 export const ListMikroEntity = defineEntity({
   name: 'List',
@@ -13,10 +13,13 @@ export const ListMikroEntity = defineEntity({
     name: p.string(),
     position: p.integer().fieldName('position'),
     board: p
-          .manyToOne(BoardMikroEntity)
-          .fieldName('board_id')
-          .deleteRule('cascade'),
-    status: p.enum(['active', 'archived']).fieldName('status').default('active'),
+      .manyToOne(BoardMikroEntity)
+      .fieldName('board_id')
+      .deleteRule('cascade'),
+    status: p
+      .enum(['active', 'archived'])
+      .fieldName('status')
+      .default('active'),
     createdAt: p
       .datetime()
       .fieldName('created_at')

@@ -96,9 +96,10 @@ export class MikroOrmCommentRepository implements CommentRepository {
   async findDistinctAuthorIdsByCard(cardId: string): Promise<string[]> {
     const rows = await this.em
       .getConnection()
-      .execute<
-        { authorId: string }[]
-      >(`select distinct author_id as "authorId" from comments where card_id = ?`, [cardId]);
+      .execute<{ authorId: string }[]>(
+        `select distinct author_id as "authorId" from comments where card_id = ?`,
+        [cardId],
+      );
 
     return rows.map((row) => row.authorId);
   }

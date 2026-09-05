@@ -245,6 +245,16 @@
           "keyName": "board_members_pkey",
           "primary": true,
           "unique": true
+        },
+        {
+          "columnNames": [
+            "user_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "board_members_user_id_index",
+          "primary": false,
+          "unique": false
         }
       ],
       "checks": [],
@@ -269,6 +279,158 @@
           ],
           "constraintName": "board_members_user_id_foreign",
           "localTableName": "public.board_members",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.users",
+          "updateRule": "cascade",
+          "deleteRule": "cascade"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "board_view_preferences",
+      "schema": "public",
+      "columns": {
+        "board_id": {
+          "name": "board_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": []
+        },
+        "group_by": {
+          "name": "group_by",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'list'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "list",
+            "assignee",
+            "label",
+            "due_date"
+          ]
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": []
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": []
+        },
+        "view": {
+          "name": "view",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'board'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "board",
+            "table",
+            "calendar"
+          ]
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "board_id",
+            "user_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "board_view_preferences_pkey",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [
+        {
+          "name": "board_view_preferences_group_by_check",
+          "expression": "\"group_by\" in ('list', 'assignee', 'label', 'due_date')",
+          "definition": "check (\"group_by\" in ('list', 'assignee', 'label', 'due_date'))",
+          "columnName": "group_by"
+        },
+        {
+          "name": "board_view_preferences_view_check",
+          "expression": "\"view\" in ('board', 'table', 'calendar')",
+          "definition": "check (\"view\" in ('board', 'table', 'calendar'))",
+          "columnName": "view"
+        }
+      ],
+      "triggers": [],
+      "foreignKeys": {
+        "board_view_preferences_board_id_foreign": {
+          "columnNames": [
+            "board_id"
+          ],
+          "constraintName": "board_view_preferences_board_id_foreign",
+          "localTableName": "public.board_view_preferences",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.boards",
+          "updateRule": "cascade",
+          "deleteRule": "cascade"
+        },
+        "board_view_preferences_user_id_foreign": {
+          "columnNames": [
+            "user_id"
+          ],
+          "constraintName": "board_view_preferences_user_id_foreign",
+          "localTableName": "public.board_view_preferences",
           "referencedColumnNames": [
             "id"
           ],
@@ -409,6 +571,18 @@
           "keyName": "boards_pkey",
           "primary": true,
           "unique": true
+        },
+        {
+          "columnNames": [
+            "to_tsvector(spanish::regconfig, tr_unaccent(name::text))"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "boards_search_idx",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX boards_search_idx ON public.boards USING gin (to_tsvector('spanish'::regconfig, tr_unaccent((name)::text)))",
+          "type": "gin"
         }
       ],
       "checks": [
@@ -500,6 +674,16 @@
           "keyName": "card_assignees_pkey",
           "primary": true,
           "unique": true
+        },
+        {
+          "columnNames": [
+            "user_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "card_assignees_user_id_index",
+          "primary": false,
+          "unique": false
         }
       ],
       "checks": [],
@@ -794,6 +978,18 @@
           "keyName": "cards_pkey",
           "primary": true,
           "unique": true
+        },
+        {
+          "columnNames": [
+            "to_tsvector(spanish::regconfig, tr_unaccent((title::text ||  ::text) || COALESCE(description, ::text)))"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "cards_search_idx",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX cards_search_idx ON public.cards USING gin (to_tsvector('spanish'::regconfig, tr_unaccent((((title)::text || ' '::text) || COALESCE(description, ''::text)))))",
+          "type": "gin"
         }
       ],
       "checks": [

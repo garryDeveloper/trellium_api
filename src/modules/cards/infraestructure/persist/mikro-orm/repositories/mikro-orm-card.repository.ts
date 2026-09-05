@@ -4,7 +4,11 @@ import {
   AssigneeInfo,
   CardLabelInfo,
   CardRepository,
+  AssignedCardsCriteria,
+  CardSearchCriteria,
+  CardWithLocation,
 } from 'src/modules/cards/domain/ports/card.repository';
+import { toPrefixTsQuery } from 'src/shared/infrastructure/persistence/full-text-search';
 import { CardMikroEntity } from '../entities/card.mikro-entity';
 import { CardAssigneeMikroEntity } from '../entities/card_assignees.mikro-entity';
 import { CardLabelMikroEntity } from '../entities/card_labels.mikro-entity';
@@ -13,8 +17,57 @@ import { CardAssignee } from 'src/modules/cards/domain/entities/card-assignee.en
 import { CardLabel } from 'src/modules/cards/domain/entities/card-label.entity';
 import { CardMapper } from '../mappers/card.mapper';
 
+/**
+ * Las fechas llegan como string: la query es SQL crudo, así que no pasa por la
+ * hidratación de MikroORM que convierte `timestamptz` a `Date`.
+ */
+interface CardWithLocationRow {
+  id: string;
+  title: string;
+  description: string | null;
+  position: number;
+  status: 'active' | 'archived';
+  dueDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt: string | null;
+  listId: string;
+  listName: string;
+  boardId: string;
+  boardName: string;
+}
+
+/** Una fila cruda a dominio. La comparten la búsqueda global y "Mi trabajo". */
+function toCardWithLocation(row: CardWithLocationRow): CardWithLocation {
+  return {
+    card: Card.fromPersistence({
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      listId: row.listId,
+      status: row.status,
+      position: Number(row.position),
+      dueDate: row.dueDate ? new Date(row.dueDate) : null,
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+      archivedAt: row.archivedAt ? new Date(row.archivedAt) : null,
+    }),
+    listName: row.listName,
+    boardId: row.boardId,
+    boardName: row.boardName,
+  };
+}
+
 @Injectable()
 export class MikroOrmCardRepository implements CardRepository {
+  /**
+   * Idéntica, carácter por carácter, a la expresión del índice
+   * `cards_search_idx`. Si las dos se separan la búsqueda sigue dando el mismo
+   * resultado, pero deja de usar el índice: por eso está en una constante y no
+   * escrita a mano en la query.
+   */
+  private static readonly SEARCH_VECTOR = `to_tsvector('spanish', tr_unaccent(c.title || ' ' || coalesce(c.description, '')))`;
+
   constructor(private readonly em: EntityManager) {}
   async createCard(card: Card): Promise<Card> {
     const cardEntity = this.em.create(
@@ -230,6 +283,88 @@ export class MikroOrmCardRepository implements CardRepository {
     });
 
     return row !== null;
+  }
+
+  async searchForMember(
+    criteria: CardSearchCriteria,
+  ): Promise<CardWithLocation[]> {
+    const tsQuery = toPrefixTsQuery(criteria.query);
+    // Texto sin una sola letra ni dígito ("...", "??"): no hay nada que buscar.
+    if (!tsQuery) {
+      return [];
+    }
+
+    const vector = MikroOrmCardRepository.SEARCH_VECTOR;
+
+    const rows = await this.em.getConnection().execute<CardWithLocationRow[]>(
+      `select c.id, c.title, c.description, c.position, c.status,
+              c.due_date    as "dueDate",
+              c.created_at  as "createdAt",
+              c.updated_at  as "updatedAt",
+              c.archived_at as "archivedAt",
+              c.list_id     as "listId",
+              l.name        as "listName",
+              b.id          as "boardId",
+              b.name        as "boardName"
+         from cards c
+         join lists l  on l.id = c.list_id
+         join boards b on b.id = l.board_id
+         join board_members bm on bm.board_id = b.id and bm.user_id = ?
+        where ${vector} @@ to_tsquery('spanish', tr_unaccent(?))
+          and (cast(? as boolean) or (c.status = 'active' and l.status = 'active' and b.status = 'active'))
+          and (b.status <> 'archived' or b.owner_id = ?)
+        order by ts_rank(${vector}, to_tsquery('spanish', tr_unaccent(?))) desc,
+                 b.name asc, l.position asc, c.position asc
+        limit ?`,
+      [
+        criteria.userId,
+        tsQuery,
+        criteria.includeArchived,
+        criteria.userId,
+        tsQuery,
+        criteria.limit,
+      ],
+    );
+
+    return rows.map(toCardWithLocation);
+  }
+
+  async findAssignedToMember(
+    criteria: AssignedCardsCriteria,
+  ): Promise<CardWithLocation[]> {
+    const params: unknown[] = [criteria.userId, criteria.userId];
+    // El filtro por tablero se arma o no se arma; un `?` que a veces es null
+    // obligaría a castear el parámetro para que Postgres le encuentre el tipo.
+    let boardFilter = '';
+    if (criteria.boardId) {
+      boardFilter = 'and b.id = ?';
+      params.push(criteria.boardId);
+    }
+
+    const rows = await this.em.getConnection().execute<CardWithLocationRow[]>(
+      `select c.id, c.title, c.description, c.position, c.status,
+              c.due_date    as "dueDate",
+              c.created_at  as "createdAt",
+              c.updated_at  as "updatedAt",
+              c.archived_at as "archivedAt",
+              c.list_id     as "listId",
+              l.name        as "listName",
+              b.id          as "boardId",
+              b.name        as "boardName"
+         from cards c
+         join card_assignees ca on ca.card_id = c.id and ca.user_id = ?
+         join lists l  on l.id = c.list_id
+         join boards b on b.id = l.board_id
+         join board_members bm on bm.board_id = b.id and bm.user_id = ?
+        where c.status = 'active'
+          and l.status = 'active'
+          and b.status = 'active'
+          ${boardFilter}
+        order by c.due_date asc nulls last, b.name asc, l.position asc, c.position asc`,
+      params,
+    );
+
+    return rows.map(toCardWithLocation);
   }
 
   async deleteCard(cardId: string): Promise<void> {

@@ -72,7 +72,9 @@ export class ListsController {
       currentUserId: req.user.sub,
     });
 
-    return { lists: lists.map((list) => ListResponseMapper.toResponseDto(list)) };
+    return {
+      lists: lists.map((list) => ListResponseMapper.toResponseDto(list)),
+    };
   }
 
   @Post('boards/:boardId/lists')

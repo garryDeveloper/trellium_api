@@ -1,6 +1,7 @@
 import { Board } from '../../../domain/entities/board.entity';
 import { Invitation } from '../../../domain/entities/invitation.entity';
 import { Label } from '../../../domain/entities/label.entity';
+import { BoardViewPreferences } from '../../../domain/entities/board-view-preferences.entity';
 import { BoardMembershipSummary } from '../../../domain/ports/board.repository';
 import { InvitationSummary } from '../../../domain/ports/invitation.repository';
 import { BoardMemberSummary } from '../../../application/use-cases/list-board-members.use-case';
@@ -10,6 +11,7 @@ import { InvitationResponseDto } from '../dto/invitation.response.dto';
 import { MyInvitationResponseDto } from '../dto/my-invitation.response.dto';
 import { BoardMemberResponseDto } from '../dto/board-member.response.dto';
 import { LabelResponseDto } from '../dto/label.response.dto';
+import { BoardViewPreferencesResponseDto } from '../dto/board-view-preferences.response.dto';
 
 export class BoardResponseMapper {
   static toLabelDto(label: Label): LabelResponseDto {
@@ -67,6 +69,15 @@ export class BoardResponseMapper {
       createdAt: summary.createdAt.toISOString(),
       role: summary.role,
       memberCount: summary.memberCount,
+    };
+  }
+
+  static toViewPreferencesDto(
+    preferences: BoardViewPreferences,
+  ): BoardViewPreferencesResponseDto {
+    return {
+      view: preferences.view,
+      groupBy: preferences.groupBy,
     };
   }
 

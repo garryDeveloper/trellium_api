@@ -8,6 +8,33 @@ export interface AssigneeInfo {
   email: string;
 }
 
+/**
+ * Una tarjeta con el contexto de dónde vive. Lo necesitan las dos lecturas que
+ * cruzan tableros —la búsqueda global (T11.2) y "Mi trabajo" (T12.4)—: las dos
+ * muestran de qué tablero y de qué lista viene cada tarjeta, y la tarjeta sola
+ * no sabe nada de ninguno de los dos.
+ */
+export interface CardWithLocation {
+  card: Card;
+  listName: string;
+  boardId: string;
+  boardName: string;
+}
+
+export interface AssignedCardsCriteria {
+  userId: string;
+  /** Opcional: acota a un solo tablero (T12.4, filtro por tablero). */
+  boardId?: string;
+}
+
+export interface CardSearchCriteria {
+  userId: string;
+  /** Texto tal cual lo escribió el usuario. */
+  query: string;
+  includeArchived: boolean;
+  limit: number;
+}
+
 export interface CardLabelInfo {
   id: string;
   boardId: string;
@@ -53,6 +80,25 @@ export interface CardRepository {
   findLabelsByCards(cardIds: string[]): Promise<Map<string, CardLabelInfo[]>>;
   isLabelApplied(cardId: string, labelId: string): Promise<boolean>;
   deleteCard(cardId: string): Promise<void>;
+  /**
+   * Tarjetas que coinciden con el texto, restringidas a los tableros donde
+   * `userId` es miembro (T11.2). El filtro de membresía es parte de la query y
+   * no un chequeo posterior: no hay forma de que un resultado de un tablero
+   * ajeno llegue a materializarse (`domain.md`, regla 2).
+   */
+  searchForMember(criteria: CardSearchCriteria): Promise<CardWithLocation[]>;
+  /**
+   * Tarjetas activas asignadas a `userId` en los tableros donde sigue siendo
+   * miembro (T12.4). Como en `searchForMember`, la membresía es parte de la
+   * query: quedar fuera de un tablero hace desaparecer sus tarjetas de acá sin
+   * ningún chequeo posterior (`domain.md`, reglas 2 y 13).
+   *
+   * Excluye tarjetas archivadas y todo lo que cuelgue de una lista o un tablero
+   * archivados.
+   */
+  findAssignedToMember(
+    criteria: AssignedCardsCriteria,
+  ): Promise<CardWithLocation[]>;
 }
 
 export const CARD_REPOSITORY = Symbol('CARD_REPOSITORY');

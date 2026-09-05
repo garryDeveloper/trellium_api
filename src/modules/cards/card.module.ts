@@ -31,6 +31,8 @@ import { CreateAttachmentUseCase } from './application/use-cases/create-attachme
 import { ListCardAttachmentsUseCase } from './application/use-cases/list-card-attachments.use-case';
 import { GetAttachmentFileUseCase } from './application/use-cases/get-attachment-file.use-case';
 import { DeleteAttachmentUseCase } from './application/use-cases/delete-attachment.use-case';
+import { SearchUseCase } from './application/use-cases/search.use-case';
+import { ListMyCardsUseCase } from './application/use-cases/list-my-cards.use-case';
 import { CARD_REPOSITORY } from './domain/ports/card.repository';
 import { CHECKLIST_REPOSITORY } from './domain/ports/checklist.repository';
 import { COMMENT_REPOSITORY } from './domain/ports/comment.repository';
@@ -55,6 +57,9 @@ import { CardsController } from './infraestructure/http/controllers/cards.contro
 import { ChecklistsController } from './infraestructure/http/controllers/checklists.controller';
 import { CommentController } from './infraestructure/http/controllers/comment.controller';
 import { AttachmentsController } from './infraestructure/http/controllers/attachments.controller';
+import { SearchController } from './infraestructure/http/controllers/search.controller';
+import { MeCardsController } from './infraestructure/http/controllers/me-cards.controller';
+import { CardResponseComposer } from './infraestructure/http/card-response.composer';
 
 @Module({
   imports: [
@@ -77,6 +82,12 @@ import { AttachmentsController } from './infraestructure/http/controllers/attach
     ChecklistsController,
     CommentController,
     AttachmentsController,
+    // La búsqueda global (T11.2) no es un módulo aparte: es una lectura sobre
+    // tarjetas y tableros, y vive donde vive lo que devuelve.
+    SearchController,
+    // "Mi trabajo" (T12.4), por el mismo motivo: es una lectura de tarjetas que
+    // cruza tableros, no un dominio nuevo.
+    MeCardsController,
   ],
   providers: [
     CreateCardUseCase,
@@ -107,6 +118,9 @@ import { AttachmentsController } from './infraestructure/http/controllers/attach
     ListCardAttachmentsUseCase,
     GetAttachmentFileUseCase,
     DeleteAttachmentUseCase,
+    SearchUseCase,
+    ListMyCardsUseCase,
+    CardResponseComposer,
     { provide: CARD_REPOSITORY, useClass: MikroOrmCardRepository },
     { provide: CHECKLIST_REPOSITORY, useClass: MikroOrmChecklistRepository },
     { provide: COMMENT_REPOSITORY, useClass: MikroOrmCommentRepository },

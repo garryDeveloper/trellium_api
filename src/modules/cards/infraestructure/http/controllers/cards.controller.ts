@@ -30,15 +30,12 @@ import { UpdateCardUseCase } from '../../../application/use-cases/update-card.us
 import { MoveCardUseCase } from '../../../application/use-cases/move-card.use-case';
 import { AssignMemberUseCase } from '../../../application/use-cases/assign-member.use-case';
 import { UnassignMemberUseCase } from '../../../application/use-cases/unassign-member.use-case';
-import { ListCardAssigneesUseCase } from '../../../application/use-cases/list-card-assignees.use-case';
 import { ApplyLabelUseCase } from '../../../application/use-cases/apply-label.use-case';
 import { RemoveLabelUseCase } from '../../../application/use-cases/remove-label.use-case';
-import { ListCardLabelsUseCase } from '../../../application/use-cases/list-card-labels.use-case';
 import { ArchiveCardUseCase } from '../../../application/use-cases/archive-card.use-case';
 import { UnarchiveCardUseCase } from '../../../application/use-cases/unarchive-card.use-case';
 import { DeleteCardUseCase } from '../../../application/use-cases/delete-card.use-case';
 import { ListCardsUseCase } from '../../../application/use-cases/list-cards.use-case';
-import { ListCardsChecklistProgressUseCase } from '../../../application/use-cases/list-cards-checklist-progress.use-case';
 import { Card } from '../../../domain/entities/card.entity';
 import { CreateCardDto } from '../dto/create-card.dto';
 import { UpdateCardDto } from '../dto/update-card.dto';
@@ -50,7 +47,7 @@ import {
   CardResponseDto,
   ListCardsResponseDto,
 } from '../dto/card.response.dto';
-import { CardResponseMapper } from '../mappers/card.response.mapper';
+import { CardResponseComposer } from '../card-response.composer';
 
 @ApiTags('cards')
 @ApiBearerAuth()
@@ -64,15 +61,13 @@ export class CardsController {
     private readonly moveCardUseCase: MoveCardUseCase,
     private readonly assignMemberUseCase: AssignMemberUseCase,
     private readonly unassignMemberUseCase: UnassignMemberUseCase,
-    private readonly listCardAssigneesUseCase: ListCardAssigneesUseCase,
     private readonly applyLabelUseCase: ApplyLabelUseCase,
     private readonly removeLabelUseCase: RemoveLabelUseCase,
-    private readonly listCardLabelsUseCase: ListCardLabelsUseCase,
     private readonly archiveCardUseCase: ArchiveCardUseCase,
     private readonly unarchiveCardUseCase: UnarchiveCardUseCase,
     private readonly deleteCardUseCase: DeleteCardUseCase,
     private readonly listCardsUseCase: ListCardsUseCase,
-    private readonly listCardsChecklistProgressUseCase: ListCardsChecklistProgressUseCase,
+    private readonly cardResponses: CardResponseComposer,
   ) {}
 
   @Get('lists/:listId/cards')
@@ -261,31 +256,11 @@ export class CardsController {
     });
   }
 
-  private async toResponseDto(card: Card): Promise<CardResponseDto> {
-    const [dto] = await this.toResponseDtos([card]);
-    return dto;
+  private toResponseDto(card: Card): Promise<CardResponseDto> {
+    return this.cardResponses.toResponseDto(card);
   }
 
-  /**
-   * Resuelve responsables, etiquetas y progreso de checklist de todas las
-   * tarjetas con tres queries en total, en vez de tres por tarjeta.
-   */
-  private async toResponseDtos(cards: Card[]): Promise<CardResponseDto[]> {
-    const cardIds = cards.map((card) => card.id);
-
-    const [assigneesByCard, labelsByCard, progressByCard] = await Promise.all([
-      this.listCardAssigneesUseCase.execute({ cardIds }),
-      this.listCardLabelsUseCase.execute({ cardIds }),
-      this.listCardsChecklistProgressUseCase.execute({ cardIds }),
-    ]);
-
-    return cards.map((card) =>
-      CardResponseMapper.toResponseDto(
-        card,
-        assigneesByCard.get(card.id) ?? [],
-        labelsByCard.get(card.id) ?? [],
-        progressByCard.get(card.id) ?? null,
-      ),
-    );
+  private toResponseDtos(cards: Card[]): Promise<CardResponseDto[]> {
+    return this.cardResponses.toResponseDtos(cards);
   }
 }

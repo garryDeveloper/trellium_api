@@ -6,10 +6,22 @@ import {
   BoardMemberInfo,
   BoardMembershipSummary,
   BoardRepository,
+  BoardSearchCriteria,
 } from '../../../../domain/ports/board.repository';
+import { toPrefixTsQuery } from 'src/shared/infrastructure/persistence/full-text-search';
 import { BoardMikroEntity } from '../entities/board.mikro-entity';
 import { BoardMemberMikroEntity } from '../entities/board-member.mikro-entity';
 import { BoardMapper } from '../mappers/board.mapper';
+
+/** Fechas como string por la misma razón que en `BoardMembershipRow`: SQL crudo. */
+interface BoardSearchRow {
+  id: string;
+  name: string;
+  owner_id: string;
+  status: 'active' | 'archived';
+  created_at: string;
+  updated_at: string;
+}
 
 interface BoardMembershipRow {
   id: string;
@@ -22,6 +34,9 @@ interface BoardMembershipRow {
 
 @Injectable()
 export class MikroOrmBoardRepository implements BoardRepository {
+  /** Espejo exacto de la expresión del índice `boards_search_idx`. */
+  private static readonly SEARCH_VECTOR = `to_tsvector('spanish', tr_unaccent(b.name))`;
+
   constructor(private readonly em: EntityManager) {}
   async deleteBoard(boardId: string): Promise<void> {
     await this.em.nativeDelete(BoardMikroEntity, { id: boardId });
@@ -126,5 +141,46 @@ export class MikroOrmBoardRepository implements BoardRepository {
       role: row.owner_id === userId ? 'owner' : 'member',
       memberCount: Number(row.member_count),
     }));
+  }
+
+  async searchForMember(criteria: BoardSearchCriteria): Promise<Board[]> {
+    const tsQuery = toPrefixTsQuery(criteria.query);
+    if (!tsQuery) {
+      return [];
+    }
+
+    const vector = MikroOrmBoardRepository.SEARCH_VECTOR;
+
+    const rows = await this.em.getConnection().execute<BoardSearchRow[]>(
+      `select b.id, b.name, b.owner_id, b.status, b.created_at, b.updated_at
+         from boards b
+         inner join board_members bm on bm.board_id = b.id
+        where bm.user_id = ?
+          and ${vector} @@ to_tsquery('spanish', tr_unaccent(?))
+          and (cast(? as boolean) or b.status = 'active')
+          and (b.status <> 'archived' or b.owner_id = ?)
+        order by ts_rank(${vector}, to_tsquery('spanish', tr_unaccent(?))) desc,
+                 b.name asc
+        limit ?`,
+      [
+        criteria.userId,
+        tsQuery,
+        criteria.includeArchived,
+        criteria.userId,
+        tsQuery,
+        criteria.limit,
+      ],
+    );
+
+    return rows.map((row) =>
+      Board.fromPersistence({
+        id: row.id,
+        name: row.name,
+        ownerId: row.owner_id,
+        status: row.status,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
+      }),
+    );
   }
 }

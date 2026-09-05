@@ -9,6 +9,7 @@ import { BoardMikroEntity } from './infrastructure/persistence/mikro-orm/entitie
 import { BoardMemberMikroEntity } from './infrastructure/persistence/mikro-orm/entities/board-member.mikro-entity';
 import { InvitationMikroEntity } from './infrastructure/persistence/mikro-orm/entities/invitation.mikro-entity';
 import { LabelMikroEntity } from './infrastructure/persistence/mikro-orm/entities/label.mikro-entity';
+import { BoardViewPreferencesMikroEntity } from './infrastructure/persistence/mikro-orm/entities/board-view-preferences.mikro-entity';
 import { BoardsController } from './infrastructure/http/controllers/boards.controller';
 import { BoardInvitationsController } from './infrastructure/http/controllers/board-invitations.controller';
 import { InvitationsController } from './infrastructure/http/controllers/invitations.controller';
@@ -16,6 +17,7 @@ import { MeInvitationsController } from './infrastructure/http/controllers/me-in
 import { BoardMembersController } from './infrastructure/http/controllers/board-members.controller';
 import { BoardLabelsController } from './infrastructure/http/controllers/board-labels.controller';
 import { LabelsController } from './infrastructure/http/controllers/labels.controller';
+import { BoardViewPreferencesController } from './infrastructure/http/controllers/board-view-preferences.controller';
 import { ChangeStatusUseCase } from './application/use-cases/change-status.use-case';
 import { ChangeNameUseCase } from './application/use-cases/change-name.use-case';
 import { DeleteBoardUseCase } from './application/use-cases/delete-board.use-case';
@@ -39,6 +41,10 @@ import { CreateLabelUseCase } from './application/use-cases/create-label.use-cas
 import { ListBoardLabelsUseCase } from './application/use-cases/list-board-labels.use-case';
 import { UpdateLabelUseCase } from './application/use-cases/update-label.use-case';
 import { DeleteLabelUseCase } from './application/use-cases/delete-label.use-case';
+import { BOARD_VIEW_PREFERENCES_REPOSITORY } from './domain/ports/board-view-preferences.repository';
+import { MikroOrmBoardViewPreferencesRepository } from './infrastructure/persistence/mikro-orm/repositories/mikro-orm-board-view-preferences.repository';
+import { GetBoardViewPreferencesUseCase } from './application/use-cases/get-board-view-preferences.use-case';
+import { SaveBoardViewPreferencesUseCase } from './application/use-cases/save-board-view-preferences.use-case';
 
 @Module({
   imports: [
@@ -48,6 +54,7 @@ import { DeleteLabelUseCase } from './application/use-cases/delete-label.use-cas
       BoardMemberMikroEntity,
       InvitationMikroEntity,
       LabelMikroEntity,
+      BoardViewPreferencesMikroEntity,
     ]),
     IamModule,
   ],
@@ -59,6 +66,7 @@ import { DeleteLabelUseCase } from './application/use-cases/delete-label.use-cas
     BoardMembersController,
     BoardLabelsController,
     LabelsController,
+    BoardViewPreferencesController,
   ],
   providers: [
     CreateBoardUseCase,
@@ -79,10 +87,16 @@ import { DeleteLabelUseCase } from './application/use-cases/delete-label.use-cas
     ListBoardLabelsUseCase,
     UpdateLabelUseCase,
     DeleteLabelUseCase,
+    GetBoardViewPreferencesUseCase,
+    SaveBoardViewPreferencesUseCase,
     { provide: BOARD_REPOSITORY, useClass: MikroOrmBoardRepository },
     { provide: INVITATION_REPOSITORY, useClass: MikroOrmInvitationRepository },
     { provide: USER_DIRECTORY_PORT, useClass: IamUserDirectoryAdapter },
     { provide: LABEL_REPOSITORY, useClass: MikroOrmLabelRepository },
+    {
+      provide: BOARD_VIEW_PREFERENCES_REPOSITORY,
+      useClass: MikroOrmBoardViewPreferencesRepository,
+    },
   ],
   exports: [BOARD_REPOSITORY, LABEL_REPOSITORY],
 })
