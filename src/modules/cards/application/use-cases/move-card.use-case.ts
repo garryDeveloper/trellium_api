@@ -1,5 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UseCase } from 'src/shared/application/use-case.interface';
+import {
+  ACTIVITY_RECORDER,
+  type ActivityRecorderPort,
+} from 'src/shared/application/ports/activity-recorder.port';
 import { Card } from '../../domain/entities/card.entity';
 import {
   CARD_REPOSITORY,
@@ -31,6 +35,8 @@ export class MoveCardUseCase implements UseCase<MoveCardCommand, Card> {
     @Inject(CARD_REPOSITORY) private readonly cards: CardRepository,
     @Inject(LIST_REPOSITORY) private readonly lists: ListRepository,
     @Inject(BOARD_REPOSITORY) private readonly boards: BoardRepository,
+    @Inject(ACTIVITY_RECORDER)
+    private readonly activities: ActivityRecorderPort,
   ) {}
 
   async execute(command: MoveCardCommand): Promise<Card> {
@@ -95,8 +101,30 @@ export class MoveCardUseCase implements UseCase<MoveCardCommand, Card> {
       targetPosition,
     );
 
-    return this.cards.update(
+    const moved = await this.cards.update(
       card.moveTo({ listId: destinationList.id, position: targetPosition }),
     );
+
+    /*
+      Sólo se registra el movimiento ENTRE listas, no el reordenamiento dentro
+      de una: acomodar tarjetas es una operación de lectura del tablero, y
+      anotarla llenaría el historial de líneas que nadie va a reconstruir. El
+      criterio de T13.1 habla de "movimiento entre listas".
+    */
+    await this.activities.record([
+      {
+        boardId: sourceList.boardId,
+        cardId: moved.id,
+        actorUserId: command.currentUserId,
+        detail: {
+          type: 'card_moved',
+          cardTitle: moved.title,
+          fromListName: sourceList.name,
+          toListName: destinationList.name,
+        },
+      },
+    ]);
+
+    return moved;
   }
 }

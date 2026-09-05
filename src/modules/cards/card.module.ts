@@ -33,6 +33,7 @@ import { GetAttachmentFileUseCase } from './application/use-cases/get-attachment
 import { DeleteAttachmentUseCase } from './application/use-cases/delete-attachment.use-case';
 import { SearchUseCase } from './application/use-cases/search.use-case';
 import { ListMyCardsUseCase } from './application/use-cases/list-my-cards.use-case';
+import { ListCardActivitiesUseCase } from './application/use-cases/list-card-activities.use-case';
 import { CARD_REPOSITORY } from './domain/ports/card.repository';
 import { CHECKLIST_REPOSITORY } from './domain/ports/checklist.repository';
 import { COMMENT_REPOSITORY } from './domain/ports/comment.repository';
@@ -41,6 +42,7 @@ import { ATTACHMENT_STORAGE } from './domain/ports/attachment-storage.port';
 import { USER_DIRECTORY_PORT } from './application/ports/user-directory.port';
 import { IamUserDirectoryAdapter } from './infraestructure/adapters/iam-user-directory.adapter';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ActivitiesModule } from '../activities/activities.module';
 import { MikroOrmCardRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-card.repository';
 import { MikroOrmChecklistRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-checklist.repository';
 import { MikroOrmCommentRepository } from './infraestructure/persist/mikro-orm/repositories/mikro-orm-comment.repository';
@@ -59,6 +61,7 @@ import { CommentController } from './infraestructure/http/controllers/comment.co
 import { AttachmentsController } from './infraestructure/http/controllers/attachments.controller';
 import { SearchController } from './infraestructure/http/controllers/search.controller';
 import { MeCardsController } from './infraestructure/http/controllers/me-cards.controller';
+import { CardActivitiesController } from './infraestructure/http/controllers/card-activities.controller';
 import { CardResponseComposer } from './infraestructure/http/card-response.composer';
 
 @Module({
@@ -76,6 +79,10 @@ import { CardResponseComposer } from './infraestructure/http/card-response.compo
     ListModule,
     BoardsModule,
     NotificationsModule,
+    // El historial (E13) se registra desde los casos de uso de tarjeta y se lee
+    // desde acá: `activities` no importa a nadie, así que la dependencia va en
+    // una sola dirección y no hace falta `forwardRef`.
+    ActivitiesModule,
   ],
   controllers: [
     CardsController,
@@ -88,6 +95,7 @@ import { CardResponseComposer } from './infraestructure/http/card-response.compo
     // "Mi trabajo" (T12.4), por el mismo motivo: es una lectura de tarjetas que
     // cruza tableros, no un dominio nuevo.
     MeCardsController,
+    CardActivitiesController,
   ],
   providers: [
     CreateCardUseCase,
@@ -120,6 +128,7 @@ import { CardResponseComposer } from './infraestructure/http/card-response.compo
     DeleteAttachmentUseCase,
     SearchUseCase,
     ListMyCardsUseCase,
+    ListCardActivitiesUseCase,
     CardResponseComposer,
     { provide: CARD_REPOSITORY, useClass: MikroOrmCardRepository },
     { provide: CHECKLIST_REPOSITORY, useClass: MikroOrmChecklistRepository },

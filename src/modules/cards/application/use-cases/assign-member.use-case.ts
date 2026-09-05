@@ -1,5 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UseCase } from 'src/shared/application/use-case.interface';
+import {
+  ACTIVITY_RECORDER,
+  type ActivityRecorderPort,
+} from 'src/shared/application/ports/activity-recorder.port';
 import { Card } from '../../domain/entities/card.entity';
 import { CardAssignee } from '../../domain/entities/card-assignee.entity';
 import {
@@ -42,6 +46,8 @@ export class AssignMemberUseCase implements UseCase<AssignMemberCommand, Card> {
     private readonly notifications: NotificationPublisherPort,
     @Inject(USER_DIRECTORY_PORT)
     private readonly userDirectory: UserDirectoryPort,
+    @Inject(ACTIVITY_RECORDER)
+    private readonly activities: ActivityRecorderPort,
   ) {}
 
   async execute(command: AssignMemberCommand): Promise<Card> {
@@ -79,6 +85,22 @@ export class AssignMemberUseCase implements UseCase<AssignMemberCommand, Card> {
       await this.cards.assignMember(
         CardAssignee.create({ cardId: command.cardId, userId: command.userId }),
       );
+
+      // Dentro del `if` por el mismo motivo que la notificación: reasignar a
+      // quien ya estaba no volvió a cambiar nada, así que no es un hecho.
+      const member = await this.userDirectory.findUserById(command.userId);
+      await this.activities.record([
+        {
+          boardId: list.boardId,
+          cardId: card.id,
+          actorUserId: command.currentUserId,
+          detail: {
+            type: 'assignee_added',
+            cardTitle: card.title,
+            memberName: member?.name ?? 'Alguien',
+          },
+        },
+      ]);
 
       // Dentro del `if`: reasignar a alguien que ya estaba no vuelve a
       // notificarlo. Y nadie se autonotifica al asignarse a sí mismo.

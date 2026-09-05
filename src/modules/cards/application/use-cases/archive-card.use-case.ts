@@ -1,5 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UseCase } from 'src/shared/application/use-case.interface';
+import {
+  ACTIVITY_RECORDER,
+  type ActivityRecorderPort,
+} from 'src/shared/application/ports/activity-recorder.port';
 import { Card } from '../../domain/entities/card.entity';
 import {
   CARD_REPOSITORY,
@@ -27,6 +31,8 @@ export class ArchiveCardUseCase implements UseCase<ArchiveCardCommand, Card> {
     @Inject(CARD_REPOSITORY) private readonly cards: CardRepository,
     @Inject(LIST_REPOSITORY) private readonly lists: ListRepository,
     @Inject(BOARD_REPOSITORY) private readonly boards: BoardRepository,
+    @Inject(ACTIVITY_RECORDER)
+    private readonly activities: ActivityRecorderPort,
   ) {}
 
   async execute(command: ArchiveCardCommand): Promise<Card> {
@@ -48,6 +54,17 @@ export class ArchiveCardUseCase implements UseCase<ArchiveCardCommand, Card> {
       throw new NotBoardMemberError();
     }
 
-    return this.cards.update(card.archive());
+    const updated = await this.cards.update(card.archive());
+
+    await this.activities.record([
+      {
+        boardId: list.boardId,
+        cardId: card.id,
+        actorUserId: command.currentUserId,
+        detail: { type: 'card_archived', cardTitle: updated.title },
+      },
+    ]);
+
+    return updated;
   }
 }

@@ -1,6 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UseCase } from 'src/shared/application/use-case.interface';
 import {
+  ACTIVITY_RECORDER,
+  type ActivityRecorderPort,
+} from 'src/shared/application/ports/activity-recorder.port';
+import {
   BOARD_REPOSITORY,
   type BoardRepository,
 } from 'src/modules/boards/domain/ports/board.repository';
@@ -55,6 +59,8 @@ export class CreateAttachmentUseCase implements UseCase<
     @Inject(ATTACHMENT_STORAGE) private readonly storage: AttachmentStorage,
     @Inject(LIST_REPOSITORY) private readonly lists: ListRepository,
     @Inject(BOARD_REPOSITORY) private readonly boards: BoardRepository,
+    @Inject(ACTIVITY_RECORDER)
+    private readonly activities: ActivityRecorderPort,
   ) {}
 
   async execute(
@@ -110,12 +116,30 @@ export class CreateAttachmentUseCase implements UseCase<
       size: command.content.length,
     });
 
+    let saved: AttachmentWithUploader;
     try {
-      return await this.attachments.createAttachment(attachment);
+      saved = await this.attachments.createAttachment(attachment);
     } catch (error) {
       // Si la fila no se pudo insertar, el archivo en disco quedaría huérfano.
       await this.storage.delete(stored.storageKey);
       throw error;
     }
+
+    // Fuera del `try`: el registro del historial no debe poder disparar el
+    // borrado compensatorio del archivo recién subido.
+    await this.activities.record([
+      {
+        boardId: list.boardId,
+        cardId: card.id,
+        actorUserId: command.currentUserId,
+        detail: {
+          type: 'attachment_added',
+          cardTitle: card.title,
+          fileName: attachment.filename,
+        },
+      },
+    ]);
+
+    return saved;
   }
 }

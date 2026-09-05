@@ -1,5 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UseCase } from 'src/shared/application/use-case.interface';
+import {
+  ACTIVITY_RECORDER,
+  type ActivityRecorderPort,
+} from 'src/shared/application/ports/activity-recorder.port';
 import { Card } from '../../domain/entities/card.entity';
 import { CardLabel } from '../../domain/entities/card-label.entity';
 import {
@@ -36,6 +40,8 @@ export class ApplyLabelUseCase implements UseCase<ApplyLabelCommand, Card> {
     @Inject(LIST_REPOSITORY) private readonly lists: ListRepository,
     @Inject(BOARD_REPOSITORY) private readonly boards: BoardRepository,
     @Inject(LABEL_REPOSITORY) private readonly labels: LabelRepository,
+    @Inject(ACTIVITY_RECORDER)
+    private readonly activities: ActivityRecorderPort,
   ) {}
 
   async execute(command: ApplyLabelCommand): Promise<Card> {
@@ -74,6 +80,20 @@ export class ApplyLabelUseCase implements UseCase<ApplyLabelCommand, Card> {
       await this.cards.applyLabel(
         CardLabel.create({ cardId: command.cardId, labelId: command.labelId }),
       );
+
+      await this.activities.record([
+        {
+          boardId: list.boardId,
+          cardId: card.id,
+          actorUserId: command.currentUserId,
+          detail: {
+            type: 'label_applied',
+            cardTitle: card.title,
+            labelName: label.name,
+            labelColor: label.color,
+          },
+        },
+      ]);
     }
 
     return card;
